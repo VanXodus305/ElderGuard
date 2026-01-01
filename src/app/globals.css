@@ -10,7 +10,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    /* --foreground: #000000; */
   }
 }
 
@@ -26,6 +26,43 @@ body {
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Hide Google Translate widget but keep it functional */
+.goog-te-banner-frame {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.goog-te-gadget {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+.goog-te-combo {
+  display: none !important;
+}
+
+/* Prevent body shift from Google Translate */
+body {
+  top: 0 !important;
+  position: relative !important;
+}
+
+/* Hide Google Translate toolbar/notification */
+.goog-te-banner {
+  display: none !important;
+}
+
+.goog-te-top-frame {
+  display: none !important;
+}
+
+.skiptranslate {
+  display: none !important;
 }
 
 body {

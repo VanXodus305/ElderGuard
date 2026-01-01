@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 const Provider = ({ children }) => {
   const router = useRouter();
   return (
-    // <SessionProvider>
+    <SessionProvider>
       <HeroUIProvider navigate={router.push}>{children}</HeroUIProvider>
-    // </SessionProvider>
+    </SessionProvider>
   );
 };
 

@@ -1,5 +1,5 @@
 {
-  "name": "rupeeflow",
+  "name": "elderguard",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -19,7 +19,8 @@
     "next-auth": "^5.0.0-beta.28",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
