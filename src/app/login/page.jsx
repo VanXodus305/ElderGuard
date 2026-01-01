@@ -56,8 +56,8 @@ export default function LoginPage() {
     }
   }, [status, session, router]);
 
-  const handleGoogleSignIn = async () => {
-    await signIn("google", { redirect: false });
+  const handleGoogleSignIn = () => {
+    signIn("google", { callbackUrl: "/dashboard" });
   };
 
   return (

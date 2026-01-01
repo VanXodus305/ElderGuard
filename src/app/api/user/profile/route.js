@@ -26,14 +26,14 @@ export async function PUT(req) {
     const updatedUser = await User.findOneAndUpdate(
       { email: session.user.email },
       {
-        age,
+        age: String(age),
         address,
         emergencyContactName,
         emergencyContactPhone,
         emergencyContactWhatsapp,
         profileComplete: true,
       },
-      { new: true }
+      { new: true, strict: false }
     );
 
     if (!updatedUser) {

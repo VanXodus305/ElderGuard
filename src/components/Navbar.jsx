@@ -275,14 +275,30 @@ const GlobalNavbar = () => {
         {session ? (
           <Dropdown>
             <DropdownTrigger>
-              <Button
-                variant="flat"
-                className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-semibold"
-              >
-                {session.user.name || "User"}
-              </Button>
+              <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity bg-emerald-100 hover:bg-emerald-200 px-3 py-2 rounded-lg">
+                {session.user.image && (
+                  <img
+                    src={session.user.image}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full border-2 border-emerald-300"
+                  />
+                )}
+                <span className="text-emerald-700 font-semibold hidden sm:block text-sm">
+                  {session.user.name || "User"}
+                </span>
+              </div>
             </DropdownTrigger>
             <DropdownMenu aria-label="User menu">
+              <DropdownItem
+                key="dashboard"
+                startContent={<FiUser />}
+                onClick={() => {
+                  router.push("/dashboard");
+                  setIsMenuOpen(false);
+                }}
+              >
+                Dashboard
+              </DropdownItem>
               <DropdownItem
                 key="profile"
                 startContent={<FiUser />}
@@ -414,34 +430,68 @@ const GlobalNavbar = () => {
 
         {session ? (
           <>
-            <NavbarMenuItem className="my-2">
-              <Button
-                fullWidth
-                onClick={() => {
-                  router.push("/profile");
-                  setIsMenuOpen(false);
-                }}
-                className="justify-start bg-transparent text-emerald-700"
-                variant="flat"
-                startContent={<FiUser />}
-              >
-                Profile
-              </Button>
-            </NavbarMenuItem>
-            <NavbarMenuItem>
-              <Button
-                fullWidth
-                onClick={async () => {
-                  await signOut({ redirect: false });
-                  router.push("/");
-                  setIsMenuOpen(false);
-                }}
-                className="justify-start bg-transparent text-red-600"
-                variant="flat"
-                startContent={<FiLogOut />}
-              >
-                Logout
-              </Button>
+            <NavbarMenuItem className="my-4">
+              <div className="w-full bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-4">
+                  {session.user.image && (
+                    <img
+                      src={session.user.image}
+                      alt="Profile"
+                      className="w-12 h-12 rounded-full border-2 border-emerald-300"
+                    />
+                  )}
+                  <div>
+                    <p className="font-semibold text-emerald-900">
+                      {session.user.name || "User"}
+                    </p>
+                    <p className="text-xs text-emerald-600">
+                      {session.user.email}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Button
+                    fullWidth
+                    onClick={() => {
+                      router.push("/dashboard");
+                      setIsMenuOpen(false);
+                    }}
+                    className="justify-start bg-emerald-500 text-white hover:bg-emerald-600"
+                    variant="flat"
+                    size="sm"
+                    startContent={<FiUser />}
+                  >
+                    Dashboard
+                  </Button>
+                  <Button
+                    fullWidth
+                    onClick={() => {
+                      router.push("/profile");
+                      setIsMenuOpen(false);
+                    }}
+                    className="justify-start bg-teal-500 text-white hover:bg-teal-600"
+                    variant="flat"
+                    size="sm"
+                    startContent={<FiUser />}
+                  >
+                    Profile
+                  </Button>
+                  <Button
+                    fullWidth
+                    onClick={async () => {
+                      await signOut({ redirect: false });
+                      router.push("/");
+                      setIsMenuOpen(false);
+                    }}
+                    className="justify-start bg-red-500 text-white hover:bg-red-600"
+                    variant="flat"
+                    size="sm"
+                    startContent={<FiLogOut />}
+                  >
+                    Logout
+                  </Button>
+                </div>
+              </div>
             </NavbarMenuItem>
           </>
         ) : (

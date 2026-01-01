@@ -10,6 +10,7 @@ import {
   Select,
   SelectItem,
   Progress,
+  Checkbox,
 } from "@heroui/react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -55,6 +56,7 @@ export default function ProfileSetupPage() {
   };
 
   const [loading, setLoading] = useState(false);
+  const [sameAsPhone, setSameAsPhone] = useState(false);
   const [formData, setFormData] = useState({
     age: "",
     address: "",
@@ -66,15 +68,59 @@ export default function ProfileSetupPage() {
   React.useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
+    } else if (status === "authenticated") {
+      if (session?.user?.profileComplete === true) {
+        router.push("/dashboard");
+      }
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    let name, value;
+
+    // Handle HeroUI Select which has a different event structure
+    if (e.target.name !== undefined) {
+      name = e.target.name;
+      value = e.target.value;
+    } else if (typeof e === "object" && e.key !== undefined) {
+      // HeroUI Select uses a key-based system
+      name = e.currentKey ? Object.keys(e)[0] : "age";
+      value = Array.from(e)[0]?.[0] || e.toString();
+    } else {
+      // Regular input
+      name = e?.target?.name;
+      value = e?.target?.value;
+    }
+
+    if (name) {
+      setFormData((prev) => {
+        const updated = {
+          ...prev,
+          [name]: value,
+        };
+        // If phone number changes and sameAsPhone is checked, update WhatsApp field
+        if (name === "emergencyContactPhone" && sameAsPhone) {
+          updated.emergencyContactWhatsapp = value;
+        }
+        return updated;
+      });
+    }
+  };
+
+  const handleSameAsPhoneChange = (e) => {
+    const isChecked = e.target.checked;
+    setSameAsPhone(isChecked);
+    if (isChecked) {
+      setFormData((prev) => ({
+        ...prev,
+        emergencyContactWhatsapp: prev.emergencyContactPhone,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        emergencyContactWhatsapp: "",
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -113,26 +159,26 @@ export default function ProfileSetupPage() {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-b from-background-200 to-background-100 py-12 px-4"
+      className="min-h-screen bg-gradient-to-b from-background-200 to-background-100 py-6 sm:py-12 px-4 sm:px-6"
       style={{ fontSize: getFontSize() }}
     >
-      <div className="max-w-2xl mx-auto">
+      <div className="w-full max-w-2xl mx-auto">
         <Card className="border-2 border-emerald-200 bg-white shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-600 p-8 text-white">
+          <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 sm:p-8 text-white">
             <div className="w-full">
-              <h1 className={`${getHeadingClass(3)} font-bold mb-2`}>
+              <h1 className={`${getHeadingClass(3)} font-bold mb-1 sm:mb-2`}>
                 Complete Your Profile
               </h1>
-              <p className="text-emerald-50">
+              <p className="text-emerald-50 text-sm sm:text-base">
                 Help us set up emergency contacts to protect you
               </p>
             </div>
           </CardHeader>
 
-          <CardBody className="p-8">
+          <CardBody className="p-4 sm:p-8">
             {/* Progress Section */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
+            <div className="mb-6 sm:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
                 <h2
                   className={`${getHeadingClass(
                     2
@@ -140,7 +186,7 @@ export default function ProfileSetupPage() {
                 >
                   Personal Information
                 </h2>
-                <span className="text-sm text-emerald-600 font-semibold">
+                <span className="text-xs sm:text-sm text-emerald-600 font-semibold whitespace-nowrap">
                   Step 1 of 1
                 </span>
               </div>
@@ -150,17 +196,22 @@ export default function ProfileSetupPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Details */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-emerald-900 mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-emerald-900 mb-4">
                   Your Details
                 </h3>
 
                 <Select
                   label="Age Group"
                   name="age"
-                  value={formData.age}
-                  onChange={handleChange}
+                  selectedKeys={formData.age ? [formData.age] : []}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      age: e.target.value,
+                    }));
+                  }}
                   placeholder="Select your age group"
-                  required
+                  isRequired
                   className="w-full"
                 >
                   <SelectItem key="60-65">60-65 years</SelectItem>
@@ -177,50 +228,64 @@ export default function ProfileSetupPage() {
                   onChange={handleChange}
                   placeholder="Enter your address"
                   type="text"
-                  required
+                  isRequired
                 />
               </div>
 
               {/* Emergency Contact Section */}
               <div className="space-y-4 border-t-2 border-emerald-200 pt-6">
-                <h3 className="text-lg font-semibold text-emerald-900 mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-emerald-900 mb-4">
                   Emergency Contact Details
                 </h3>
-                <p className="text-emerald-700 text-sm">
+                <p className="text-emerald-700 text-xs sm:text-sm">
                   This person will be notified in case of suspicious messages.
                   Usually a family member or caregiver.
                 </p>
 
                 <Input
-                  label="Emergency Contact Name"
+                  label="Name"
                   name="emergencyContactName"
                   value={formData.emergencyContactName}
                   onChange={handleChange}
                   placeholder="Full name of emergency contact"
                   type="text"
-                  required
+                  isRequired
                 />
 
                 <Input
-                  label="Emergency Contact Phone (WhatsApp)"
+                  label="Phone Number"
                   name="emergencyContactPhone"
                   value={formData.emergencyContactPhone}
                   onChange={handleChange}
                   placeholder="E.g., +91XXXXXXXXXX"
                   type="tel"
-                  required
-                  description="This number will be used to send alerts via WhatsApp"
+                  isRequired
+                  description="Contact number for emergency alerts"
                 />
 
-                <Input
-                  label="Emergency Contact WhatsApp Number (Optional)"
-                  name="emergencyContactWhatsapp"
-                  value={formData.emergencyContactWhatsapp}
-                  onChange={handleChange}
-                  placeholder="E.g., +91XXXXXXXXXX"
-                  type="tel"
-                  description="If different from the phone number above"
-                />
+                <div className="space-y-3">
+                  <Checkbox
+                    checked={sameAsPhone}
+                    onChange={handleSameAsPhoneChange}
+                    className="text-emerald-600"
+                  >
+                    <span className="text-emerald-700">
+                      Same as phone number
+                    </span>
+                  </Checkbox>
+
+                  <Input
+                    label="WhatsApp Number"
+                    name="emergencyContactWhatsapp"
+                    value={formData.emergencyContactWhatsapp}
+                    onChange={handleChange}
+                    placeholder="E.g., +91XXXXXXXXXX"
+                    type="tel"
+                    disabled={sameAsPhone}
+                    isRequired={!sameAsPhone}
+                    description="WhatsApp number for notifications"
+                  />
+                </div>
               </div>
 
               {/* Safety Notice */}
@@ -236,11 +301,11 @@ export default function ProfileSetupPage() {
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-4 pt-6">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-6">
                 <Button
                   onClick={() => router.push("/")}
                   variant="bordered"
-                  className="border-2 border-emerald-300 text-emerald-700 font-semibold flex-1 py-6 text-lg"
+                  className="border-2 border-emerald-300 text-emerald-700 font-semibold flex-1 py-4 sm:py-6 text-base sm:text-lg"
                 >
                   Go Back
                 </Button>
@@ -248,7 +313,7 @@ export default function ProfileSetupPage() {
                   type="submit"
                   isLoading={loading}
                   disabled={loading}
-                  className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold flex-1 py-6 text-lg"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold flex-1 py-4 sm:py-6 text-base sm:text-lg"
                   endContent={!loading && <FiArrowRight />}
                 >
                   {loading ? "Saving..." : "Continue to Dashboard"}

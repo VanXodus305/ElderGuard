@@ -15,6 +15,7 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
+  Checkbox,
 } from "@heroui/react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -61,6 +62,7 @@ export default function ProfilePage() {
   };
 
   const [loading, setLoading] = useState(false);
+  const [sameAsPhone, setSameAsPhone] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [formData, setFormData] = useState({
     age: "",
@@ -74,15 +76,22 @@ export default function ProfilePage() {
     if (status === "unauthenticated") {
       router.push("/login");
     } else if (status === "authenticated") {
-      fetchProfile();
+      if (session?.user?.profileComplete === false) {
+        router.push("/profile-setup");
+      } else {
+        fetchProfile();
+      }
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
   const fetchProfile = async () => {
     try {
       const response = await fetch("/api/user/profile");
       if (response.ok) {
         const data = await response.json();
+        const isWhatsappSameAsPhone =
+          data.emergencyContactWhatsapp === data.emergencyContactPhone;
+        setSameAsPhone(isWhatsappSameAsPhone);
         setUserProfile(data);
         setFormData({
           age: data.age || "",
@@ -99,14 +108,36 @@ export default function ProfilePage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [name]: value,
+      };
+      // If phone number changes and sameAsPhone is checked, update WhatsApp field
+      if (name === "emergencyContactPhone" && sameAsPhone) {
+        updated.emergencyContactWhatsapp = value;
+      }
+      return updated;
+    });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSameAsPhoneChange = (e) => {
+    const isChecked = e.target.checked;
+    setSameAsPhone(isChecked);
+    if (isChecked) {
+      setFormData((prev) => ({
+        ...prev,
+        emergencyContactWhatsapp: prev.emergencyContactPhone,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        emergencyContactWhatsapp: "",
+      }));
+    }
+  };
+
+  const handleSubmit = async () => {
     setLoading(true);
 
     try {
@@ -144,28 +175,28 @@ export default function ProfilePage() {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-b from-background-200 to-background-100 py-12 px-4"
+      className="min-h-screen bg-gradient-to-b from-background-200 to-background-100 py-6 sm:py-12 px-4 sm:px-6"
       style={{ fontSize: getFontSize() }}
     >
-      <div className="max-w-2xl mx-auto">
+      <div className="w-full max-w-2xl mx-auto">
         <Card className="border-2 border-emerald-200 bg-white shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-600 p-8 text-white">
+          <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 sm:p-8 text-white">
             <div className="w-full">
-              <h1 className={`${getHeadingClass(3)} font-bold mb-2`}>
+              <h1 className={`${getHeadingClass(3)} font-bold mb-1 sm:mb-2`}>
                 Your Profile
               </h1>
-              <p className="text-emerald-50">
+              <p className="text-emerald-50 text-sm sm:text-base">
                 Manage your personal information and emergency contacts
               </p>
             </div>
           </CardHeader>
 
-          <CardBody className="p-8">
+          <CardBody className="p-4 sm:p-8">
             {userProfile ? (
               <div className="space-y-6">
                 {/* Personal Details Section */}
-                <div className="space-y-4 bg-emerald-50 p-6 rounded-lg border border-emerald-200">
-                  <div className="flex justify-between items-center mb-4">
+                <div className="space-y-4 bg-emerald-50 p-4 sm:p-6 rounded-lg border border-emerald-200">
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
                     <h3
                       className={`${getHeadingClass(
                         2
@@ -175,7 +206,7 @@ export default function ProfilePage() {
                     </h3>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-emerald-600 font-semibold">
                         Name
@@ -302,6 +333,7 @@ export default function ProfilePage() {
                     value={formData.age}
                     onChange={handleChange}
                     placeholder="Select your age group"
+                    isRequired
                   >
                     <SelectItem key="60-65">60-65 years</SelectItem>
                     <SelectItem key="65-70">65-70 years</SelectItem>
@@ -317,6 +349,7 @@ export default function ProfilePage() {
                     onChange={handleChange}
                     placeholder="Enter your address"
                     type="text"
+                    isRequired
                   />
 
                   <Input
@@ -326,6 +359,7 @@ export default function ProfilePage() {
                     onChange={handleChange}
                     placeholder="Full name"
                     type="text"
+                    isRequired
                   />
 
                   <Input
@@ -335,16 +369,31 @@ export default function ProfilePage() {
                     onChange={handleChange}
                     placeholder="E.g., +91XXXXXXXXXX"
                     type="tel"
+                    isRequired
                   />
 
-                  <Input
-                    label="WhatsApp Number (Optional)"
-                    name="emergencyContactWhatsapp"
-                    value={formData.emergencyContactWhatsapp}
-                    onChange={handleChange}
-                    placeholder="E.g., +91XXXXXXXXXX"
-                    type="tel"
-                  />
+                  <div className="space-y-3">
+                    <Checkbox
+                      checked={sameAsPhone}
+                      onChange={handleSameAsPhoneChange}
+                      className="text-emerald-600"
+                    >
+                      <span className="text-emerald-700">
+                        Same as phone number
+                      </span>
+                    </Checkbox>
+
+                    <Input
+                      label="Emergency Contact WhatsApp Number"
+                      name="emergencyContactWhatsapp"
+                      value={formData.emergencyContactWhatsapp}
+                      onChange={handleChange}
+                      placeholder="E.g., +91XXXXXXXXXX"
+                      type="tel"
+                      disabled={sameAsPhone}
+                      isRequired={!sameAsPhone}
+                    />
+                  </div>
                 </form>
               </ModalBody>
               <ModalFooter>

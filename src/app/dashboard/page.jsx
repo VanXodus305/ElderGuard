@@ -71,9 +71,13 @@ export default function DashboardPage() {
     if (status === "unauthenticated") {
       router.push("/login");
     } else if (status === "authenticated") {
-      fetchProfile();
+      if (session?.user?.profileComplete === false) {
+        router.push("/profile-setup");
+      } else {
+        fetchProfile();
+      }
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
   const fetchProfile = async () => {
     try {
@@ -219,39 +223,43 @@ export default function DashboardPage() {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-b from-background-200 to-background-100 py-12 px-4"
+      className="min-h-screen bg-gradient-to-b from-background-200 to-background-100 py-6 sm:py-12 px-4 sm:px-6"
       style={{ fontSize: getFontSize() }}
     >
       <div className="max-w-6xl mx-auto">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-emerald-900 mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1
+            className={`${getHeadingClass(
+              3
+            )} font-bold text-emerald-900 mb-2 sm:mb-3`}
+          >
             Welcome, {session?.user?.name || "User"}! 👋
           </h1>
-          <p className="text-lg text-emerald-700">
+          <p className="text-sm sm:text-lg text-emerald-700">
             Paste a message below to check if it's safe or a potential scam
           </p>
         </div>
 
         {/* Input Card */}
-        <Card className="border-2 border-emerald-200 bg-white shadow-lg mb-8">
-          <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-white">
+        <Card className="border-2 border-emerald-200 bg-white shadow-lg mb-6 sm:mb-8">
+          <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 sm:p-6 text-white">
             <h2 className={`${getHeadingClass(2)} font-bold`}>
               Check a Message
             </h2>
           </CardHeader>
 
-          <CardBody className="p-8 space-y-6">
+          <CardBody className="p-4 sm:p-8 space-y-4 sm:space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-emerald-900 mb-3">
+              <label className="block text-xs sm:text-sm font-semibold text-emerald-900 mb-2 sm:mb-3">
                 Paste your message here:
               </label>
               <Textarea
                 placeholder="Enter or paste the message you want to check..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                minRows={6}
-                className="w-full"
+                minRows={5}
+                className="w-full text-sm sm:text-base"
                 variant="bordered"
               />
             </div>
@@ -260,7 +268,7 @@ export default function DashboardPage() {
               onClick={handleAnalyzeMessage}
               isLoading={loading}
               disabled={loading || !message.trim()}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold py-6 text-lg"
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold py-4 sm:py-6 text-base sm:text-lg"
               endContent={!loading && <FiSend />}
             >
               {loading ? "Analyzing..." : "Analyze Message"}
@@ -271,7 +279,7 @@ export default function DashboardPage() {
         {/* Analysis Result */}
         {analysisResult && (
           <Card
-            className={`border-2 shadow-lg mb-8 ${
+            className={`border-2 shadow-lg mb-6 sm:mb-8 ${
               analysisResult.riskLevel === "safe"
                 ? "border-green-300 bg-green-50"
                 : analysisResult.riskLevel === "likely-scam"
@@ -280,7 +288,7 @@ export default function DashboardPage() {
             }`}
           >
             <CardHeader
-              className={`p-6 text-white ${
+              className={`p-4 sm:p-6 text-white ${
                 analysisResult.riskLevel === "safe"
                   ? "bg-green-500"
                   : analysisResult.riskLevel === "likely-scam"
@@ -288,7 +296,7 @@ export default function DashboardPage() {
                   : "bg-red-500"
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {getRiskLevelIcon()}
                 <h2 className={`${getHeadingClass(2)} font-bold`}>
                   {getRiskLevelText().title}
@@ -296,7 +304,7 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
 
-            <CardBody className="p-8 space-y-6">
+            <CardBody className="p-4 sm:p-8 space-y-4 sm:space-y-6">
               {/* Risk Description */}
               <div>
                 <p
@@ -313,11 +321,11 @@ export default function DashboardPage() {
               </div>
 
               {/* Message Content */}
-              <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
-                <p className="text-sm text-gray-600 font-semibold mb-2">
+              <div className="bg-white p-3 sm:p-4 rounded-lg border-2 border-gray-200">
+                <p className="text-xs sm:text-sm text-gray-600 font-semibold mb-2">
                   Message Content:
                 </p>
-                <p className="text-gray-800 whitespace-pre-wrap">
+                <p className="text-xs sm:text-sm text-gray-800 whitespace-pre-wrap break-words">
                   {analysisResult.message}
                 </p>
               </div>
@@ -328,34 +336,34 @@ export default function DashboardPage() {
                   <h3
                     className={`${getHeadingClass(
                       2
-                    )} font-semibold mb-4 flex items-center gap-2`}
+                    )} font-semibold mb-3 sm:mb-4 flex items-center gap-2`}
                   >
                     <FiLink2 /> Links Found ({analysisResult.urls.length})
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {analysisResult.urls.map((link, idx) => (
                       <div
                         key={idx}
-                        className={`p-4 rounded-lg border-2 flex items-center justify-between ${
+                        className={`p-3 sm:p-4 rounded-lg border-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 ${
                           link.isSafe
                             ? "bg-green-50 border-green-300"
                             : "bg-red-50 border-red-300"
                         }`}
                       >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                           {link.isSafe ? (
-                            <FiCheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                            <FiCheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-green-600 flex-shrink-0" />
                           ) : (
-                            <FiAlertOctagon className="w-5 h-5 text-red-600 flex-shrink-0" />
+                            <FiAlertOctagon className="w-4 sm:w-5 h-4 sm:h-5 text-red-600 flex-shrink-0" />
                           )}
-                          <p className="text-sm text-gray-700 truncate break-all">
+                          <p className="text-xs sm:text-sm text-gray-700 break-all">
                             {link.url}
                           </p>
                         </div>
                         <Chip
                           size="sm"
                           color={link.isSafe ? "success" : "danger"}
-                          className="ml-2 flex-shrink-0"
+                          className="flex-shrink-0 w-fit"
                         >
                           {link.isSafe ? "Safe" : "Unsafe"}
                         </Chip>
@@ -368,25 +376,25 @@ export default function DashboardPage() {
               {/* Action Buttons for Suspicious Messages */}
               {(analysisResult.riskLevel === "likely-scam" ||
                 analysisResult.riskLevel === "scam") && (
-                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                <div className="bg-red-50 border-l-4 border-red-500 p-3 sm:p-4 rounded">
                   <h3
                     className={`${getHeadingClass(
                       2
-                    )} font-semibold text-red-900 mb-4`}
+                    )} font-semibold text-red-900 mb-3 sm:mb-4`}
                   >
                     Alert Your Emergency Contact
                   </h3>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                     <Button
                       onClick={() => handleEmergencyContact("whatsapp")}
-                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-4"
+                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
                       startContent={<FiMessageCircle />}
                     >
                       Message via WhatsApp
                     </Button>
                     <Button
                       onClick={() => handleEmergencyContact("call")}
-                      className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold py-4"
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
                       startContent={<FiPhone />}
                     >
                       Call {userProfile?.emergencyContactName || "Contact"}
@@ -397,8 +405,8 @@ export default function DashboardPage() {
 
               {/* Safe Message Message */}
               {analysisResult.riskLevel === "safe" && (
-                <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                  <p className="text-green-900 font-semibold">
+                <div className="bg-green-50 border-l-4 border-green-500 p-3 sm:p-4 rounded">
+                  <p className="text-xs sm:text-sm text-green-900 font-semibold">
                     ✓ This message appears safe. You can safely interact with
                     it.
                   </p>
@@ -409,11 +417,13 @@ export default function DashboardPage() {
         )}
 
         {/* Information Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <Card className="border border-emerald-200 bg-white">
-            <CardBody className="p-6">
-              <h3 className="font-bold text-emerald-900 mb-3">📱 Quick Tips</h3>
-              <ul className="space-y-2 text-sm text-emerald-700">
+            <CardBody className="p-4 sm:p-6">
+              <h3 className="font-bold text-emerald-900 mb-2 sm:mb-3 text-base sm:text-lg">
+                📱 Quick Tips
+              </h3>
+              <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-emerald-700">
                 <li>• Never click links from unknown senders</li>
                 <li>• Check sender details carefully</li>
                 <li>• Ask family to verify unusual requests</li>
@@ -423,12 +433,14 @@ export default function DashboardPage() {
           </Card>
 
           <Card className="border border-emerald-200 bg-white">
-            <CardBody className="p-6">
-              <h3 className="font-bold text-emerald-900 mb-3">⚙️ Settings</h3>
+            <CardBody className="p-4 sm:p-6">
+              <h3 className="font-bold text-emerald-900 mb-2 sm:mb-3 text-base sm:text-lg">
+                ⚙️ Settings
+              </h3>
               <Button
                 onClick={() => router.push("/profile")}
                 variant="flat"
-                className="w-full border-2 border-emerald-300 text-emerald-700 font-semibold"
+                className="w-full border-2 border-emerald-300 text-emerald-700 font-semibold py-3 sm:py-4 text-sm sm:text-base"
               >
                 Manage Profile & Contacts
               </Button>
