@@ -146,7 +146,6 @@ export async function POST(req) {
       stats = retryResponse.data.data.attributes.stats;
     }
 
-    console.log("VirusTotal Analysis Stats:", stats);
     const safetyResult = determineSafetyLevel(stats);
 
     return new Response(
