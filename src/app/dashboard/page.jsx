@@ -10,6 +10,7 @@ import {
   Textarea,
   Badge,
   Chip,
+  Skeleton,
 } from "@heroui/react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -241,180 +242,208 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Input Card */}
-        <Card className="border-2 border-emerald-200 bg-white shadow-lg mb-6 sm:mb-8">
-          <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 sm:p-6 text-white">
-            <h2 className={`${getHeadingClass(2)} font-bold`}>
-              Check a Message
-            </h2>
-          </CardHeader>
-
-          <CardBody className="p-4 sm:p-8 space-y-4 sm:space-y-6">
-            <div>
-              <label className="block text-xs sm:text-sm font-semibold text-emerald-900 mb-2 sm:mb-3">
-                Paste your message here:
-              </label>
-              <Textarea
-                placeholder="Enter or paste the message you want to check..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                minRows={5}
-                className="w-full text-sm sm:text-base"
-                variant="bordered"
-              />
-            </div>
-
-            <Button
-              onClick={handleAnalyzeMessage}
-              isLoading={loading}
-              disabled={loading || !message.trim()}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold py-4 sm:py-6 text-base sm:text-lg"
-              endContent={!loading && <FiSend />}
-            >
-              {loading ? "Analyzing..." : "Analyze Message"}
-            </Button>
-          </CardBody>
-        </Card>
-
-        {/* Analysis Result */}
-        {analysisResult && (
-          <Card
-            className={`border-2 shadow-lg mb-6 sm:mb-8 ${
-              analysisResult.riskLevel === "safe"
-                ? "border-green-300 bg-green-50"
-                : analysisResult.riskLevel === "likely-scam"
-                ? "border-yellow-300 bg-yellow-50"
-                : "border-red-300 bg-red-50"
-            }`}
-          >
-            <CardHeader
-              className={`p-4 sm:p-6 text-white ${
-                analysisResult.riskLevel === "safe"
-                  ? "bg-green-500"
-                  : analysisResult.riskLevel === "likely-scam"
-                  ? "bg-yellow-500"
-                  : "bg-red-500"
-              }`}
-            >
-              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                {getRiskLevelIcon()}
-                <h2 className={`${getHeadingClass(2)} font-bold`}>
-                  {getRiskLevelText().title}
-                </h2>
-              </div>
+        {/* Main Content Grid - Two columns on desktop, stacked on mobile */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
+          {/* Input Card - Left column */}
+          <Card className="border-2 border-emerald-200 bg-white shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 sm:p-6 text-white">
+              <h2 className={`${getHeadingClass(2)} font-bold`}>
+                Check a Message
+              </h2>
             </CardHeader>
 
             <CardBody className="p-4 sm:p-8 space-y-4 sm:space-y-6">
-              {/* Risk Description */}
               <div>
-                <p
-                  className={`text-lg font-semibold mb-2 ${
-                    analysisResult.riskLevel === "safe"
-                      ? "text-green-900"
-                      : analysisResult.riskLevel === "likely-scam"
-                      ? "text-yellow-900"
-                      : "text-red-900"
-                  }`}
-                >
-                  {getRiskLevelText().description}
-                </p>
+                <label className="block text-xs sm:text-sm font-semibold text-emerald-900 mb-2 sm:mb-3">
+                  Paste your message here:
+                </label>
+                <Textarea
+                  placeholder="Enter or paste the message you want to check..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  minRows={5}
+                  className="w-full text-sm sm:text-base"
+                  variant="bordered"
+                />
               </div>
 
-              {/* Message Content */}
-              <div className="bg-white p-3 sm:p-4 rounded-lg border-2 border-gray-200">
-                <p className="text-xs sm:text-sm text-gray-600 font-semibold mb-2">
-                  Message Content:
-                </p>
-                <p className="text-xs sm:text-sm text-gray-800 whitespace-pre-wrap break-words">
-                  {analysisResult.message}
-                </p>
-              </div>
-
-              {/* Links Analysis */}
-              {analysisResult.urls.length > 0 && (
-                <div>
-                  <h3
-                    className={`${getHeadingClass(
-                      2
-                    )} font-semibold mb-3 sm:mb-4 flex items-center gap-2`}
-                  >
-                    <FiLink2 /> Links Found ({analysisResult.urls.length})
-                  </h3>
-                  <div className="space-y-2 sm:space-y-3">
-                    {analysisResult.urls.map((link, idx) => (
-                      <div
-                        key={idx}
-                        className={`p-3 sm:p-4 rounded-lg border-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 ${
-                          link.isSafe
-                            ? "bg-green-50 border-green-300"
-                            : "bg-red-50 border-red-300"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                          {link.isSafe ? (
-                            <FiCheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-green-600 flex-shrink-0" />
-                          ) : (
-                            <FiAlertOctagon className="w-4 sm:w-5 h-4 sm:h-5 text-red-600 flex-shrink-0" />
-                          )}
-                          <p className="text-xs sm:text-sm text-gray-700 break-all">
-                            {link.url}
-                          </p>
-                        </div>
-                        <Chip
-                          size="sm"
-                          color={link.isSafe ? "success" : "danger"}
-                          className="flex-shrink-0 w-fit"
-                        >
-                          {link.isSafe ? "Safe" : "Unsafe"}
-                        </Chip>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons for Suspicious Messages */}
-              {(analysisResult.riskLevel === "likely-scam" ||
-                analysisResult.riskLevel === "scam") && (
-                <div className="bg-red-50 border-l-4 border-red-500 p-3 sm:p-4 rounded">
-                  <h3
-                    className={`${getHeadingClass(
-                      2
-                    )} font-semibold text-red-900 mb-3 sm:mb-4`}
-                  >
-                    Alert Your Emergency Contact
-                  </h3>
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                    <Button
-                      onClick={() => handleEmergencyContact("whatsapp")}
-                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
-                      startContent={<FiMessageCircle />}
-                    >
-                      Message via WhatsApp
-                    </Button>
-                    <Button
-                      onClick={() => handleEmergencyContact("call")}
-                      className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
-                      startContent={<FiPhone />}
-                    >
-                      Call {userProfile?.emergencyContactName || "Contact"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Safe Message Message */}
-              {analysisResult.riskLevel === "safe" && (
-                <div className="bg-green-50 border-l-4 border-green-500 p-3 sm:p-4 rounded">
-                  <p className="text-xs sm:text-sm text-green-900 font-semibold">
-                    ✓ This message appears safe. You can safely interact with
-                    it.
-                  </p>
-                </div>
-              )}
+              <Button
+                onClick={handleAnalyzeMessage}
+                isLoading={loading}
+                disabled={loading || !message.trim()}
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold py-4 sm:py-6 text-base sm:text-lg"
+                endContent={!loading && <FiSend />}
+              >
+                {loading ? "Analyzing..." : "Analyze Message"}
+              </Button>
             </CardBody>
           </Card>
-        )}
+
+          {/* Results Section - Right column */}
+          <div>
+            {loading ? (
+              // Loading skeleton
+              <Card className="border-2 border-gray-200 bg-white shadow-lg h-full">
+                <CardHeader className="bg-gray-200 p-4 sm:p-6">
+                  <Skeleton className="w-1/2 h-8 rounded-lg" />
+                </CardHeader>
+                <CardBody className="p-4 sm:p-8 space-y-4 sm:space-y-6">
+                  <Skeleton className="w-full h-6 rounded-lg" />
+                  <Skeleton className="w-full h-20 rounded-lg" />
+                  <Skeleton className="w-full h-6 rounded-lg" />
+                  <Skeleton className="w-full h-12 rounded-lg" />
+                </CardBody>
+              </Card>
+            ) : analysisResult ? (
+              // Analysis Result
+              <Card
+                className={`border-2 shadow-lg h-full ${
+                  analysisResult.riskLevel === "safe"
+                    ? "border-green-300 bg-green-50"
+                    : analysisResult.riskLevel === "likely-scam"
+                    ? "border-yellow-300 bg-yellow-50"
+                    : "border-red-300 bg-red-50"
+                }`}
+              >
+                <CardHeader
+                  className={`p-4 sm:p-6 text-white ${
+                    analysisResult.riskLevel === "safe"
+                      ? "bg-green-500"
+                      : analysisResult.riskLevel === "likely-scam"
+                      ? "bg-yellow-500"
+                      : "bg-red-500"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    {getRiskLevelIcon()}
+                    <h2 className={`${getHeadingClass(2)} font-bold`}>
+                      {getRiskLevelText().title}
+                    </h2>
+                  </div>
+                </CardHeader>
+
+                <CardBody className="p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-y-auto max-h-[600px]">
+                  {/* Risk Description */}
+                  <div>
+                    <p
+                      className={`text-lg font-semibold mb-2 ${
+                        analysisResult.riskLevel === "safe"
+                          ? "text-green-900"
+                          : analysisResult.riskLevel === "likely-scam"
+                          ? "text-yellow-900"
+                          : "text-red-900"
+                      }`}
+                    >
+                      {getRiskLevelText().description}
+                    </p>
+                  </div>
+
+                  {/* Message Content */}
+                  <div className="bg-white p-3 sm:p-4 rounded-lg border-2 border-gray-200">
+                    <p className="text-xs sm:text-sm text-gray-600 font-semibold mb-2">
+                      Message Content:
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-800 whitespace-pre-wrap break-words">
+                      {analysisResult.message}
+                    </p>
+                  </div>
+
+                  {/* Links Analysis */}
+                  {analysisResult.urls.length > 0 && (
+                    <div>
+                      <h3
+                        className={`${getHeadingClass(
+                          2
+                        )} font-semibold mb-3 sm:mb-4 flex items-center gap-2`}
+                      >
+                        <FiLink2 /> Links Found ({analysisResult.urls.length})
+                      </h3>
+                      <div className="space-y-2 sm:space-y-3">
+                        {analysisResult.urls.map((link, idx) => (
+                          <div
+                            key={idx}
+                            className={`p-3 sm:p-4 rounded-lg border-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 ${
+                              link.isSafe
+                                ? "bg-green-50 border-green-300"
+                                : "bg-red-50 border-red-300"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                              {link.isSafe ? (
+                                <FiCheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-green-600 flex-shrink-0" />
+                              ) : (
+                                <FiAlertOctagon className="w-4 sm:w-5 h-4 sm:h-5 text-red-600 flex-shrink-0" />
+                              )}
+                              <p className="text-xs sm:text-sm text-gray-700 break-all">
+                                {link.url}
+                              </p>
+                            </div>
+                            <Chip
+                              size="sm"
+                              color={link.isSafe ? "success" : "danger"}
+                              className="flex-shrink-0 w-fit"
+                            >
+                              {link.isSafe ? "Safe" : "Unsafe"}
+                            </Chip>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons for Suspicious Messages */}
+                  {(analysisResult.riskLevel === "likely-scam" ||
+                    analysisResult.riskLevel === "scam") && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-3 sm:p-4 rounded">
+                      <h3
+                        className={`${getHeadingClass(
+                          2
+                        )} font-semibold text-red-900 mb-3 sm:mb-4`}
+                      >
+                        Alert Your Emergency Contact
+                      </h3>
+                      <div className="flex flex-col gap-2 sm:gap-4">
+                        <Button
+                          onClick={() => handleEmergencyContact("whatsapp")}
+                          className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
+                          startContent={<FiMessageCircle />}
+                        >
+                          Message via WhatsApp
+                        </Button>
+                        <Button
+                          onClick={() => handleEmergencyContact("call")}
+                          className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
+                          startContent={<FiPhone />}
+                        >
+                          Call {userProfile?.emergencyContactName || "Contact"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Safe Message Message */}
+                  {analysisResult.riskLevel === "safe" && (
+                    <div className="bg-green-50 border-l-4 border-green-500 p-3 sm:p-4 rounded">
+                      <p className="text-xs sm:text-sm text-green-900 font-semibold">
+                        ✓ This message appears safe. You can safely interact with
+                        it.
+                      </p>
+                    </div>
+                  )}
+                </CardBody>
+              </Card>
+            ) : (
+              // Empty state
+              <Card className="border-2 border-gray-200 bg-white shadow-lg h-full flex items-center justify-center">
+                <CardBody className="p-4 sm:p-8 text-center">
+                  <p className="text-emerald-600 text-sm sm:text-base">
+                    Analyze a message to see results here
+                  </p>
+                </CardBody>
+              </Card>
+            )}
+          </div>
+        </div>
 
         {/* Information Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">

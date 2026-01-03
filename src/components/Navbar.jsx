@@ -16,16 +16,22 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  useDisclosure,
 } from "@heroui/react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FiLogOut, FiUser, FiGlobe } from "react-icons/fi";
 import { MdTextFields } from "react-icons/md";
+import { IoPlay } from "react-icons/io5";
 
 export const FontSizeContext = createContext();
 
 export const FontSizeProvider = ({ children }) => {
-  const [fontSize, setFontSizeState] = useState("base");
+  const [fontSize, setFontSizeState] = useState("large");
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load saved font size from localStorage on mount
@@ -85,6 +91,47 @@ const GlobalNavbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("en");
   const [isLoaded, setIsLoaded] = useState(false);
+  const {
+    isOpen: isTutorialsOpen,
+    onOpen: onTutorialsOpen,
+    onOpenChange: onTutorialsOpenChange,
+  } = useDisclosure();
+  const [selectedVideo, setSelectedVideo] = useState(null);
+
+  const tutorials = [
+    {
+      id: 1,
+      title: "Recognizing Phishing Scams",
+      description:
+        "Learn how to identify and avoid phishing scams that target elderly people",
+      videoId: "dQw4w9WgXcQ",
+      thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+    },
+    {
+      id: 2,
+      title: "Protecting Your Online Banking",
+      description:
+        "Best practices to keep your bank account and personal information safe",
+      videoId: "3JZ_D3UKsQw",
+      thumbnail: "https://img.youtube.com/vi/3JZ_D3UKsQw/mqdefault.jpg",
+    },
+    {
+      id: 3,
+      title: "Social Media Safety Tips",
+      description:
+        "How to use social media safely and avoid sharing sensitive information",
+      videoId: "jNQXAC9IVRw",
+      thumbnail: "https://img.youtube.com/vi/jNQXAC9IVRw/mqdefault.jpg",
+    },
+    {
+      id: 4,
+      title: "Spotting Tech Support Scams",
+      description:
+        "Understand how scammers impersonate tech support and how to protect yourself",
+      videoId: "8eKcZJu_y5I",
+      thumbnail: "https://img.youtube.com/vi/8eKcZJu_y5I/mqdefault.jpg",
+    },
+  ];
 
   // Load saved language from localStorage on mount
   useEffect(() => {
@@ -182,12 +229,21 @@ const GlobalNavbar = () => {
       <NavbarMenuToggle className="text-emerald-700 md:hidden" />
 
       <NavbarContent justify="end" className="hidden md:flex gap-4">
+        {/* Tutorials Button */}
+        <Button
+          onClick={onTutorialsOpen}
+          className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold"
+          startContent={<IoPlay size={18} />}
+        >
+          Tutorials
+        </Button>
+
         {/* Font Size Select */}
         <Select
           label="Font Size"
           selectedKeys={[fontSize]}
           onChange={(e) => setFontSize(e.target.value)}
-          className="w-56"
+          className="w-40"
           size="sm"
           variant="flat"
           classNames={{
@@ -205,7 +261,7 @@ const GlobalNavbar = () => {
           label="Language"
           selectedKeys={[selectedLanguage]}
           onChange={(e) => handleTranslate(e.target.value)}
-          className="w-56"
+          className="w-52"
           size="sm"
           variant="flat"
           classNames={{
@@ -275,7 +331,7 @@ const GlobalNavbar = () => {
         {session ? (
           <Dropdown>
             <DropdownTrigger>
-              <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity bg-emerald-100 hover:bg-emerald-200 px-3 py-2 rounded-lg">
+              <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity bg-emerald-100 hover:bg-emerald-200 px-3 py-1 rounded-lg">
                 {session.user.image && (
                   <img
                     src={session.user.image}
@@ -336,10 +392,26 @@ const GlobalNavbar = () => {
       {/* Mobile Menu */}
       <NavbarMenu className="bg-emerald-50">
         <NavbarMenuItem>
+          <Button
+            fullWidth
+            onClick={() => {
+              onTutorialsOpen();
+              setIsMenuOpen(false);
+            }}
+            className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold"
+            startContent={<IoPlay size={18} />}
+          >
+            Tutorials
+          </Button>
+        </NavbarMenuItem>
+        <NavbarMenuItem>
           <Select
             label="Font Size"
             selectedKeys={[fontSize]}
-            onChange={(e) => setFontSize(e.target.value)}
+            onChange={(e) => {
+              setFontSize(e.target.value);
+              setIsMenuOpen(false);
+            }}
             className="w-full"
             size="sm"
             variant="flat"
@@ -509,6 +581,108 @@ const GlobalNavbar = () => {
           </NavbarMenuItem>
         )}
       </NavbarMenu>
+
+      {/* Tutorials Modal */}
+      <Modal
+        isOpen={isTutorialsOpen}
+        onOpenChange={onTutorialsOpenChange}
+        size="3xl"
+        backdrop="blur"
+        scrollBehavior="inside"
+      >
+        <ModalContent className="bg-gradient-to-b from-emerald-50 to-teal-50 max-h-[90vh] overflow-hidden">
+          <ModalHeader className="flex flex-col gap-1 border-b-2 border-emerald-200">
+            <h2 className="text-2xl font-bold text-emerald-700">
+              ElderGuard Tutorials
+            </h2>
+          </ModalHeader>
+          <ModalBody className="py-6">
+            {selectedVideo ? (
+              // Video Player View
+              <div className="flex flex-col gap-4">
+                <div
+                  className="w-full bg-black rounded-lg overflow-hidden"
+                  style={{
+                    paddingBottom: "56.25%",
+                    position: "relative",
+                    height: 0,
+                  }}
+                >
+                  <iframe
+                    src={`https://www.youtube.com/embed/${selectedVideo.videoId}?autoplay=1`}
+                    title={selectedVideo.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-emerald-700 mb-2">
+                    {selectedVideo.title}
+                  </h3>
+                  <p className="text-gray-700">{selectedVideo.description}</p>
+                </div>
+                <Button
+                  onClick={() => setSelectedVideo(null)}
+                  variant="flat"
+                  className="bg-emerald-200 text-emerald-700 hover:bg-emerald-300 font-semibold"
+                >
+                  ← Back to Tutorials
+                </Button>
+              </div>
+            ) : (
+              // Tutorials Grid View
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {tutorials.map((tutorial) => (
+                  <div
+                    key={tutorial.id}
+                    onClick={() => setSelectedVideo(tutorial)}
+                    className="cursor-pointer group"
+                  >
+                    <div className="relative overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
+                      <div className="relative overflow-hidden h-40 bg-gray-200">
+                        <img
+                          src={tutorial.thumbnail}
+                          alt={tutorial.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
+                          <IoPlay className="text-white text-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </div>
+                      </div>
+                      <div className="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                          <h3 className="font-bold text-emerald-700 text-sm line-clamp-2 mb-2">
+                            {tutorial.title}
+                          </h3>
+                          <p className="text-xs text-gray-600 line-clamp-3">
+                            {tutorial.description}
+                          </p>
+                        </div>
+                        <Button
+                          isIconOnly
+                          className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white mt-3 self-start"
+                          size="sm"
+                          onClick={() => setSelectedVideo(tutorial)}
+                        >
+                          <IoPlay size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Navbar>
   );
 };

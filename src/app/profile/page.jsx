@@ -335,6 +335,8 @@ export default function ProfilePage() {
                     placeholder="Select your age group"
                     isRequired
                   >
+                    <SelectItem key="50-55">50-55 years</SelectItem>
+                    <SelectItem key="55-60">55-60 years</SelectItem>
                     <SelectItem key="60-65">60-65 years</SelectItem>
                     <SelectItem key="65-70">65-70 years</SelectItem>
                     <SelectItem key="70-75">70-75 years</SelectItem>
