@@ -419,10 +419,10 @@ const GlobalNavbar = () => {
               trigger: "bg-emerald-100 hover:bg-emerald-200 text-emerald-700",
             }}
           >
-            <SelectItem key="small">Small</SelectItem>
-            <SelectItem key="base">Normal</SelectItem>
-            <SelectItem key="large">Large</SelectItem>
-            <SelectItem key="xl">Extra Large</SelectItem>
+            <SelectItem key="small">Extra Small</SelectItem>
+            <SelectItem key="base">Small</SelectItem>
+            <SelectItem key="large">Normal</SelectItem>
+            <SelectItem key="xl">Large</SelectItem>
           </Select>
         </NavbarMenuItem>
         <NavbarMenuItem>
