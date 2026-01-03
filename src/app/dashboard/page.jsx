@@ -24,6 +24,7 @@ import {
   FiPhone,
   FiMessageCircle,
 } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -156,10 +157,29 @@ export default function DashboardPage() {
       userProfile.emergencyContactWhatsapp || userProfile.emergencyContactPhone;
 
     if (method === "whatsapp") {
+      // Build detailed report message
+      let reportMessage = `SCAM ALERT REPORT\n\n`;
+      reportMessage += `Risk Level: ${getRiskLevelText().title}\n`;
+      reportMessage += `${getRiskLevelText().description}\n\n`;
+      reportMessage += `Message Content:\n${analysisResult.message}\n\n`;
+
+      if (analysisResult.urls.length > 0) {
+        reportMessage += `Links Found (${analysisResult.urls.length}):\n`;
+        analysisResult.urls.forEach((link) => {
+          reportMessage += `• ${link.url}\n`;
+          reportMessage += `  Status: ${link.isSafe ? "Safe" : "Unsafe"}\n`;
+        });
+        reportMessage += "\n";
+      }
+
+      reportMessage += `Time: ${new Date().toLocaleString()}\n`;
+      reportMessage += `\nPlease help me verify this message. I used ElderGuard to analyze it.`;
+
+      // Use simple encoding for better WhatsApp compatibility
       const whatsappUrl = `https://wa.me/${phone.replace(
         /[^0-9+]/g,
         ""
-      )}?text=ALERT: I received a suspicious message. Please help me verify if it's safe.`;
+      )}?text=${encodeURIComponent(reportMessage)}`;
       window.open(whatsappUrl, "_blank");
     } else if (method === "call") {
       window.location.href = `tel:${phone}`;
@@ -196,17 +216,17 @@ export default function DashboardPage() {
     switch (analysisResult?.riskLevel) {
       case "safe":
         return {
-          title: "✓ Message is Safe",
+          title: "Message is Safe",
           description: "This message appears to be legitimate.",
         };
       case "likely-scam":
         return {
-          title: "⚠️ Likely Scam",
+          title: "Likely Scam",
           description: "This message shows suspicious signs. Be cautious.",
         };
       case "scam":
         return {
-          title: "🚫 Scam Detected",
+          title: "Scam Detected",
           description: "This message is highly likely to be a scam.",
         };
       default:
@@ -406,7 +426,7 @@ export default function DashboardPage() {
                         <Button
                           onClick={() => handleEmergencyContact("whatsapp")}
                           className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
-                          startContent={<FiMessageCircle />}
+                          startContent={<FaWhatsapp />}
                         >
                           Message via WhatsApp
                         </Button>
@@ -425,8 +445,8 @@ export default function DashboardPage() {
                   {analysisResult.riskLevel === "safe" && (
                     <div className="bg-green-50 border-l-4 border-green-500 p-3 sm:p-4 rounded">
                       <p className="text-xs sm:text-sm text-green-900 font-semibold">
-                        ✓ This message appears safe. You can safely interact with
-                        it.
+                        ✓ This message appears safe. You can safely interact
+                        with it.
                       </p>
                     </div>
                   )}
