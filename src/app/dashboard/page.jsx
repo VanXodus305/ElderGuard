@@ -93,10 +93,28 @@ export default function DashboardPage() {
     }
   };
 
-  // Extract URLs from message
+  // Extract URLs from message - handles both full URLs and domain names
   const extractUrls = (text) => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.match(urlRegex) || [];
+    const urls = new Set();
+
+    // Match full URLs with protocol (http://, https://)
+    const fullUrlRegex = /(https?:\/\/[^\s]+)/g;
+    const fullUrlMatches = text.match(fullUrlRegex) || [];
+    fullUrlMatches.forEach((url) => urls.add(url));
+
+    // Match domain names without protocol (e.g., google.com, example.co.uk)
+    // Pattern: word characters, hyphens, dots followed by a valid TLD
+    const domainRegex =
+      /(?<![/\w.-])([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(?![/\w.-])/g;
+    const domainMatches = text.match(domainRegex) || [];
+    domainMatches.forEach((domain) => {
+      // Avoid adding if it's part of an already captured full URL
+      if (!fullUrlMatches.some((url) => url.includes(domain))) {
+        urls.add(`https://${domain}`);
+      }
+    });
+
+    return Array.from(urls);
   };
 
   const handleAnalyzeMessage = async () => {
@@ -113,11 +131,50 @@ export default function DashboardPage() {
       // Simulate ML model analysis - replace with actual API call later
       const messageIsSafe = Math.random() > 0.3; // 70% chance of safe message (placeholder)
 
-      // Simulate link scanning - replace with VirusTotal API call later
-      const linkScores = urls.map((url) => ({
-        url,
-        isSafe: Math.random() > 0.4, // 60% chance of safe link (placeholder)
-      }));
+      // Scan URLs with VirusTotal API
+      let linkScores = [];
+      if (urls.length > 0) {
+        linkScores = await Promise.all(
+          urls.map(async (url) => {
+            try {
+              const response = await fetch("/api/scan-url", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ url }),
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                return {
+                  url,
+                  isSafe: data.isSafe,
+                  riskLevel: data.riskLevel,
+                  stats: data.stats,
+                  confidence: data.confidence,
+                };
+              } else {
+                // Fallback if API fails
+                return {
+                  url,
+                  isSafe: true,
+                  riskLevel: "unknown",
+                  error: "Could not scan URL",
+                };
+              }
+            } catch (error) {
+              console.error(`Error scanning URL ${url}:`, error);
+              return {
+                url,
+                isSafe: true,
+                riskLevel: "unknown",
+                error: "Scan failed",
+              };
+            }
+          })
+        );
+      }
 
       const hasUnsafeLink = linkScores.some((link) => !link.isSafe);
 
