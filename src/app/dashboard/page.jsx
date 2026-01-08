@@ -126,12 +126,64 @@ export default function DashboardPage() {
     setLoading(true);
 
     try {
+      // Step 0: Translate message to English if needed
+      let messageToAnalyze = message.trim();
+      let detectedLanguage = "en";
+      let wasTranslated = false;
+
+      try {
+        const translationResponse = await fetch("/api/translate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: message.trim() }),
+        });
+
+        if (translationResponse.ok) {
+          const translationData = await translationResponse.json();
+          messageToAnalyze = translationData.translatedText;
+          detectedLanguage = translationData.detectedLanguage;
+          wasTranslated = translationData.wasTranslated;
+          // console.log(
+          //   `Detected language: ${detectedLanguage}, Translated: ${wasTranslated}`
+          // );
+        }
+      } catch (error) {
+        console.error("Translation error (continuing with original):", error);
+        // Continue with original message if translation fails
+      }
+
       const urls = extractUrls(message);
 
-      // Simulate ML model analysis - replace with actual API call later
-      const messageIsSafe = Math.random() > 0.3; // 70% chance of safe message (placeholder)
+      // Step 1: Call ML API to analyze message content
+      let mlResult = { prediction: "safe", confidence: 0 };
+      try {
+        const mlResponse = await fetch(
+          "https://elderguard-ml-api.onrender.com/predict",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              message: messageToAnalyze,
+            }),
+          }
+        );
 
-      // Scan URLs with VirusTotal API
+        if (mlResponse.ok) {
+          mlResult = await mlResponse.json();
+          console.log("ML API Result:", mlResult);
+        } else {
+          console.error("ML API returned error:", mlResponse.status);
+        }
+      } catch (error) {
+        console.error("Error calling ML API:", error);
+        // Continue with default safe prediction if ML API fails
+      }
+
+      // Step 2: Scan URLs with VirusTotal API
       let linkScores = [];
       if (urls.length > 0) {
         linkScores = await Promise.all(
@@ -176,23 +228,43 @@ export default function DashboardPage() {
         );
       }
 
-      const hasUnsafeLink = linkScores.some((link) => !link.isSafe);
+      // Step 3: Determine final risk level by combining ML result and link analysis
+      let finalRiskLevel = "safe";
 
-      // Determine risk level
-      let riskLevel = "safe";
-      if (messageIsSafe && !hasUnsafeLink) {
-        riskLevel = "safe";
-      } else if (!messageIsSafe && hasUnsafeLink) {
-        riskLevel = "scam";
+      // If ML model predicts scam, it's a scam
+      if (mlResult.prediction.toLowerCase() === "scam") {
+        finalRiskLevel = "scam";
       } else {
-        riskLevel = "likely-scam";
+        // ML says safe, so check links
+        const hasScamLink = linkScores.some(
+          (link) => link.riskLevel === "scam"
+        );
+        const hasLikelyScamLink = linkScores.some(
+          (link) => link.riskLevel === "likely-scam"
+        );
+        const hasUnsafeLink = linkScores.some((link) => !link.isSafe);
+
+        if (hasScamLink) {
+          // If any link is confirmed scam, the message is a scam
+          finalRiskLevel = "scam";
+        } else if (hasLikelyScamLink || hasUnsafeLink) {
+          // If any link is likely scam or unsafe, the message is likely scam
+          finalRiskLevel = "likely-scam";
+        } else {
+          // All links and message are safe
+          finalRiskLevel = "safe";
+        }
       }
 
       setAnalysisResult({
         message,
-        messageIsSafe,
+        messageToAnalyze,
+        detectedLanguage,
+        wasTranslated,
+        mlPrediction: mlResult.prediction,
+        mlConfidence: mlResult.confidence,
         urls: linkScores,
-        riskLevel,
+        riskLevel: finalRiskLevel,
         timestamp: new Date(),
       });
     } catch (error) {
@@ -201,6 +273,17 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleReportScam = () => {
+    // Dummy report button - to be implemented later
+    alert(
+      "Thank you for reporting this message. Our team will review it shortly."
+    );
+    // TODO: Implement actual reporting functionality
+    // - Send report to backend with message details, analysis results, etc.
+    // - Track reported scams for ML model improvement
+    // - Notify moderators
   };
 
   const handleEmergencyContact = (method) => {
@@ -399,7 +482,7 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
 
-                <CardBody className="p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-y-auto max-h-[600px]">
+                <CardBody className="p-4 sm:p-8 space-y-4 sm:space-y-6">
                   {/* Risk Description */}
                   <div>
                     <p
@@ -423,6 +506,16 @@ export default function DashboardPage() {
                     <p className="text-xs sm:text-sm text-gray-800 whitespace-pre-wrap break-words">
                       {analysisResult.message}
                     </p>
+                    {analysisResult.wasTranslated && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className="text-xs text-blue-600 font-semibold mb-1">
+                          🌐 Translated to English for analysis:
+                        </p>
+                        <p className="text-xs sm:text-sm text-gray-700 whitespace-pre-wrap break-words italic">
+                          {analysisResult.messageToAnalyze}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Links Analysis */}
@@ -493,6 +586,13 @@ export default function DashboardPage() {
                           startContent={<FiPhone />}
                         >
                           Call {userProfile?.emergencyContactName || "Contact"}
+                        </Button>
+                        <Button
+                          onClick={handleReportScam}
+                          className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
+                          variant="flat"
+                        >
+                          Report This Scam
                         </Button>
                       </div>
                     </div>
