@@ -174,7 +174,7 @@ export default function DashboardPage() {
 
         if (mlResponse.ok) {
           mlResult = await mlResponse.json();
-          console.log("ML API Result:", mlResult);
+          // console.log("ML API Result:", mlResult);
         } else {
           console.error("ML API returned error:", mlResponse.status);
         }
