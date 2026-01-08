@@ -62,15 +62,13 @@ export default function ProfilePage() {
   };
 
   const [loading, setLoading] = useState(false);
-  const [sameAsPhone, setSameAsPhone] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [formData, setFormData] = useState({
     age: "",
     address: "",
-    emergencyContactName: "",
-    emergencyContactPhone: "",
-    emergencyContactWhatsapp: "",
+    emergencyContacts: [],
   });
+  const [sameAsPhoneIndexes, setSameAsPhoneIndexes] = useState(new Set());
 
   React.useEffect(() => {
     if (status === "unauthenticated") {
@@ -89,51 +87,86 @@ export default function ProfilePage() {
       const response = await fetch("/api/user/profile");
       if (response.ok) {
         const data = await response.json();
-        const isWhatsappSameAsPhone =
-          data.emergencyContactWhatsapp === data.emergencyContactPhone;
-        setSameAsPhone(isWhatsappSameAsPhone);
         setUserProfile(data);
         setFormData({
           age: data.age || "",
           address: data.address || "",
-          emergencyContactName: data.emergencyContactName || "",
-          emergencyContactPhone: data.emergencyContactPhone || "",
-          emergencyContactWhatsapp: data.emergencyContactWhatsapp || "",
+          emergencyContacts: data.emergencyContacts || [],
         });
+        // Mark which contacts have same WhatsApp as phone
+        const sameSet = new Set();
+        (data.emergencyContacts || []).forEach((contact, idx) => {
+          if (contact.whatsapp === contact.phone) {
+            sameSet.add(idx);
+          }
+        });
+        setSameAsPhoneIndexes(sameSet);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e, contactIndex = null) => {
     const { name, value } = e.target;
     setFormData((prev) => {
-      const updated = {
-        ...prev,
-        [name]: value,
-      };
-      // If phone number changes and sameAsPhone is checked, update WhatsApp field
-      if (name === "emergencyContactPhone" && sameAsPhone) {
-        updated.emergencyContactWhatsapp = value;
+      if (contactIndex !== null) {
+        const updated = { ...prev };
+        updated.emergencyContacts[contactIndex][name] = value;
+        if (name === "phone" && sameAsPhoneIndexes.has(contactIndex)) {
+          updated.emergencyContacts[contactIndex].whatsapp = value;
+        }
+        return updated;
+      } else {
+        return { ...prev, [name]: value };
+      }
+    });
+  };
+
+  const handleSameAsPhoneChange = (contactIndex) => {
+    setSameAsPhoneIndexes((prev) => {
+      const updated = new Set(prev);
+      if (updated.has(contactIndex)) {
+        updated.delete(contactIndex);
+        setFormData((prevData) => {
+          const updated = { ...prevData };
+          updated.emergencyContacts[contactIndex].whatsapp = "";
+          return updated;
+        });
+      } else {
+        updated.add(contactIndex);
+        setFormData((prevData) => {
+          const updated = { ...prevData };
+          updated.emergencyContacts[contactIndex].whatsapp =
+            updated.emergencyContacts[contactIndex].phone;
+          return updated;
+        });
       }
       return updated;
     });
   };
 
-  const handleSameAsPhoneChange = (e) => {
-    const isChecked = e.target.checked;
-    setSameAsPhone(isChecked);
-    if (isChecked) {
+  const addEmergencyContact = () => {
+    setFormData((prev) => ({
+      ...prev,
+      emergencyContacts: [
+        ...prev.emergencyContacts,
+        { name: "", phone: "", whatsapp: "" },
+      ],
+    }));
+  };
+
+  const removeEmergencyContact = (index) => {
+    if (formData.emergencyContacts.length > 1) {
       setFormData((prev) => ({
         ...prev,
-        emergencyContactWhatsapp: prev.emergencyContactPhone,
+        emergencyContacts: prev.emergencyContacts.filter((_, i) => i !== index),
       }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        emergencyContactWhatsapp: "",
-      }));
+      setSameAsPhoneIndexes((prev) => {
+        const updated = new Set(prev);
+        updated.delete(index);
+        return updated;
+      });
     }
   };
 
@@ -245,7 +278,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Emergency Contact Section */}
+                {/* Emergency Contacts Section */}
                 <div className="space-y-4 bg-red-50 p-6 rounded-lg border border-red-200">
                   <div className="flex justify-between items-center mb-4">
                     <h3
@@ -253,39 +286,54 @@ export default function ProfilePage() {
                         2
                       )} font-semibold text-red-900`}
                     >
-                      Emergency Contact
+                      Emergency Contacts (
+                      {userProfile?.emergencyContacts?.length || 0})
                     </h3>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-red-600 font-semibold">
-                        Contact Name
-                      </p>
-                      <p className="text-lg text-red-900">
-                        {userProfile?.emergencyContactName || "Not provided"}
-                      </p>
+                  {userProfile?.emergencyContacts &&
+                  userProfile.emergencyContacts.length > 0 ? (
+                    <div className="space-y-4">
+                      {userProfile.emergencyContacts.map((contact, index) => (
+                        <div
+                          key={index}
+                          className="bg-white p-4 rounded-lg border-l-4 border-red-500"
+                        >
+                          <p className="text-sm font-semibold text-red-600 mb-2">
+                            Contact {index + 1}
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-xs text-red-500 font-semibold">
+                                Name
+                              </p>
+                              <p className="text-base text-red-900">
+                                {contact.name || "Not provided"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-red-500 font-semibold">
+                                Phone
+                              </p>
+                              <p className="text-base text-red-900">
+                                {contact.phone || "Not provided"}
+                              </p>
+                            </div>
+                            <div className="md:col-span-2">
+                              <p className="text-xs text-red-500 font-semibold">
+                                WhatsApp
+                              </p>
+                              <p className="text-base text-red-900">
+                                {contact.whatsapp || "Same as phone"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-
-                    <div>
-                      <p className="text-sm text-red-600 font-semibold">
-                        Phone Number
-                      </p>
-                      <p className="text-lg text-red-900">
-                        {userProfile?.emergencyContactPhone || "Not provided"}
-                      </p>
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-red-600 font-semibold">
-                        WhatsApp Number
-                      </p>
-                      <p className="text-lg text-red-900">
-                        {userProfile?.emergencyContactWhatsapp ||
-                          "Same as phone"}
-                      </p>
-                    </div>
-                  </div>
+                  ) : (
+                    <p className="text-red-600">No emergency contacts added</p>
+                  )}
                 </div>
 
                 {/* Edit Button */}
@@ -354,47 +402,86 @@ export default function ProfilePage() {
                     isRequired
                   />
 
-                  <Input
-                    label="Emergency Contact Name"
-                    name="emergencyContactName"
-                    value={formData.emergencyContactName}
-                    onChange={handleChange}
-                    placeholder="Full name"
-                    type="text"
-                    isRequired
-                  />
+                  <div className="border-t-2 border-emerald-200 pt-4">
+                    <h4 className="font-semibold text-emerald-900 mb-3">
+                      Emergency Contacts
+                    </h4>
+                    {formData.emergencyContacts.map((contact, index) => (
+                      <div
+                        key={index}
+                        className="bg-emerald-50 p-3 rounded-lg border border-emerald-200 mb-3 space-y-2"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-semibold text-emerald-700">
+                            Contact {index + 1}
+                          </span>
+                          {formData.emergencyContacts.length > 1 && (
+                            <Button
+                              isIconOnly
+                              className="bg-red-100 text-red-600 hover:bg-red-200"
+                              onClick={() => removeEmergencyContact(index)}
+                              size="sm"
+                            >
+                              ✕
+                            </Button>
+                          )}
+                        </div>
 
-                  <Input
-                    label="Emergency Contact Phone"
-                    name="emergencyContactPhone"
-                    value={formData.emergencyContactPhone}
-                    onChange={handleChange}
-                    placeholder="E.g., +91XXXXXXXXXX"
-                    type="tel"
-                    isRequired
-                  />
+                        <Input
+                          label="Name"
+                          name="name"
+                          value={contact.name}
+                          onChange={(e) => handleChange(e, index)}
+                          placeholder="Full name"
+                          type="text"
+                          isRequired
+                          size="sm"
+                        />
 
-                  <div className="space-y-3">
-                    <Checkbox
-                      checked={sameAsPhone}
-                      onChange={handleSameAsPhoneChange}
-                      className="text-emerald-600"
+                        <Input
+                          label="Phone Number"
+                          name="phone"
+                          value={contact.phone}
+                          onChange={(e) => handleChange(e, index)}
+                          placeholder="E.g., +91XXXXXXXXXX"
+                          type="tel"
+                          isRequired
+                          size="sm"
+                        />
+
+                        <div className="space-y-2">
+                          <Checkbox
+                            checked={sameAsPhoneIndexes.has(index)}
+                            onChange={() => handleSameAsPhoneChange(index)}
+                            className="text-emerald-600"
+                          >
+                            <span className="text-emerald-700 text-sm">
+                              Same as phone number
+                            </span>
+                          </Checkbox>
+
+                          <Input
+                            label="WhatsApp Number"
+                            name="whatsapp"
+                            value={contact.whatsapp}
+                            onChange={(e) => handleChange(e, index)}
+                            placeholder="E.g., +91XXXXXXXXXX"
+                            type="tel"
+                            disabled={sameAsPhoneIndexes.has(index)}
+                            isRequired={!sameAsPhoneIndexes.has(index)}
+                            size="sm"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <Button
+                      onClick={addEmergencyContact}
+                      className="w-full bg-emerald-500 text-white mt-2"
+                      variant="flat"
+                      size="sm"
                     >
-                      <span className="text-emerald-700">
-                        Same as phone number
-                      </span>
-                    </Checkbox>
-
-                    <Input
-                      label="Emergency Contact WhatsApp Number"
-                      name="emergencyContactWhatsapp"
-                      value={formData.emergencyContactWhatsapp}
-                      onChange={handleChange}
-                      placeholder="E.g., +91XXXXXXXXXX"
-                      type="tel"
-                      disabled={sameAsPhone}
-                      isRequired={!sameAsPhone}
-                    />
+                      + Add Another Contact
+                    </Button>
                   </div>
                 </form>
               </ModalBody>

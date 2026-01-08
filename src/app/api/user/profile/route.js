@@ -18,21 +18,42 @@ export async function PUT(req) {
     const {
       age,
       address,
+      emergencyContacts,
+      // Legacy fields for backwards compatibility
       emergencyContactName,
       emergencyContactPhone,
       emergencyContactWhatsapp,
     } = body;
 
+    // Build update object
+    const updateData = {
+      age: age ? String(age) : undefined,
+      address: address || undefined,
+      profileComplete: true,
+    };
+
+    // Handle new emergencyContacts array
+    if (emergencyContacts) {
+      updateData.emergencyContacts = emergencyContacts;
+    } else if (emergencyContactName || emergencyContactPhone) {
+      // Legacy support: convert old format to new array format
+      updateData.emergencyContacts = [
+        {
+          name: emergencyContactName,
+          phone: emergencyContactPhone,
+          whatsapp: emergencyContactWhatsapp,
+        },
+      ];
+    }
+
+    // Remove undefined fields
+    Object.keys(updateData).forEach(
+      (key) => updateData[key] === undefined && delete updateData[key]
+    );
+
     const updatedUser = await User.findOneAndUpdate(
       { email: session.user.email },
-      {
-        age: String(age),
-        address,
-        emergencyContactName,
-        emergencyContactPhone,
-        emergencyContactWhatsapp,
-        profileComplete: true,
-      },
+      updateData,
       { new: true, strict: false }
     );
 

@@ -1,5 +1,23 @@
 import mongoose from "mongoose";
 
+const EmergencyContactSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  phone: {
+    type: String,
+    required: true,
+  },
+  whatsapp: {
+    type: String,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 const UserSchema = new mongoose.Schema(
   {
     email: {
@@ -21,15 +39,7 @@ const UserSchema = new mongoose.Schema(
     address: {
       type: String,
     },
-    emergencyContactName: {
-      type: String,
-    },
-    emergencyContactPhone: {
-      type: String,
-    },
-    emergencyContactWhatsapp: {
-      type: String,
-    },
+    emergencyContacts: [EmergencyContactSchema],
     profileComplete: {
       type: Boolean,
       default: false,

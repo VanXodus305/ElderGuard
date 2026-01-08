@@ -205,6 +205,7 @@ export default function DashboardPage() {
                   riskLevel: data.riskLevel,
                   stats: data.stats,
                   confidence: data.confidence,
+                  httpWarning: data.httpWarning,
                 };
               } else {
                 // Fallback if API fails
@@ -286,15 +287,12 @@ export default function DashboardPage() {
     // - Notify moderators
   };
 
-  const handleEmergencyContact = (method) => {
-    if (!userProfile?.emergencyContactPhone) {
-      alert("Please set up an emergency contact first");
+  const handleEmergencyContact = (method, contact) => {
+    if (!contact) {
+      alert("Please set up emergency contacts first");
       router.push("/profile");
       return;
     }
-
-    const phone =
-      userProfile.emergencyContactWhatsapp || userProfile.emergencyContactPhone;
 
     if (method === "whatsapp") {
       // Build detailed report message
@@ -315,13 +313,14 @@ export default function DashboardPage() {
       reportMessage += `Time: ${new Date().toLocaleString()}\n`;
       reportMessage += `\nPlease help me verify this message. I used ElderGuard to analyze it.`;
 
-      // Use simple encoding for better WhatsApp compatibility
+      const phone = contact.whatsapp || contact.phone;
       const whatsappUrl = `https://wa.me/${phone.replace(
         /[^0-9+]/g,
         ""
       )}?text=${encodeURIComponent(reportMessage)}`;
       window.open(whatsappUrl, "_blank");
     } else if (method === "call") {
+      const phone = contact.phone;
       window.location.href = `tel:${phone}`;
     }
   };
@@ -530,31 +529,39 @@ export default function DashboardPage() {
                       </h3>
                       <div className="space-y-2 sm:space-y-3">
                         {analysisResult.urls.map((link, idx) => (
-                          <div
-                            key={idx}
-                            className={`p-3 sm:p-4 rounded-lg border-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 ${
-                              link.isSafe
-                                ? "bg-green-50 border-green-300"
-                                : "bg-red-50 border-red-300"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                              {link.isSafe ? (
-                                <FiCheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-green-600 flex-shrink-0" />
-                              ) : (
-                                <FiAlertOctagon className="w-4 sm:w-5 h-4 sm:h-5 text-red-600 flex-shrink-0" />
-                              )}
-                              <p className="text-xs sm:text-sm text-gray-700 break-all">
-                                {link.url}
-                              </p>
-                            </div>
-                            <Chip
-                              size="sm"
-                              color={link.isSafe ? "success" : "danger"}
-                              className="flex-shrink-0 w-fit"
+                          <div key={idx}>
+                            {link.httpWarning && (
+                              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-2 sm:p-3 mb-2 rounded">
+                                <p className="text-xs sm:text-sm text-yellow-800">
+                                  {link.httpWarning}
+                                </p>
+                              </div>
+                            )}
+                            <div
+                              className={`p-3 sm:p-4 rounded-lg border-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 ${
+                                link.isSafe
+                                  ? "bg-green-50 border-green-300"
+                                  : "bg-red-50 border-red-300"
+                              }`}
                             >
-                              {link.isSafe ? "Safe" : "Unsafe"}
-                            </Chip>
+                              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                                {link.isSafe ? (
+                                  <FiCheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-green-600 flex-shrink-0" />
+                                ) : (
+                                  <FiAlertOctagon className="w-4 sm:w-5 h-4 sm:h-5 text-red-600 flex-shrink-0" />
+                                )}
+                                <p className="text-xs sm:text-sm text-gray-700 break-all">
+                                  {link.url}
+                                </p>
+                              </div>
+                              <Chip
+                                size="sm"
+                                color={link.isSafe ? "success" : "danger"}
+                                className="flex-shrink-0 w-fit"
+                              >
+                                {link.isSafe ? "Safe" : "Unsafe"}
+                              </Chip>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -570,31 +577,61 @@ export default function DashboardPage() {
                           2
                         )} font-semibold text-red-900 mb-3 sm:mb-4`}
                       >
-                        Alert Your Emergency Contact
+                        Alert All Emergency Contacts (
+                        {userProfile?.emergencyContacts?.length || 0})
                       </h3>
-                      <div className="flex flex-col gap-2 sm:gap-4">
-                        <Button
-                          onClick={() => handleEmergencyContact("whatsapp")}
-                          className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
-                          startContent={<FaWhatsapp />}
-                        >
-                          Message via WhatsApp
-                        </Button>
-                        <Button
-                          onClick={() => handleEmergencyContact("call")}
-                          className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
-                          startContent={<FiPhone />}
-                        >
-                          Call {userProfile?.emergencyContactName || "Contact"}
-                        </Button>
-                        <Button
-                          onClick={handleReportScam}
-                          className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
-                          variant="flat"
-                        >
-                          Report This Scam
-                        </Button>
+                      <div className="space-y-4">
+                        {userProfile?.emergencyContacts &&
+                        userProfile.emergencyContacts.length > 0 ? (
+                          userProfile.emergencyContacts.map(
+                            (contact, index) => (
+                              <div
+                                key={index}
+                                className="bg-white p-3 rounded-lg border border-red-200"
+                              >
+                                <p className="text-sm font-semibold text-red-900 mb-2">
+                                  {contact.name}
+                                </p>
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={() =>
+                                      handleEmergencyContact(
+                                        "whatsapp",
+                                        contact
+                                      )
+                                    }
+                                    className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-2 text-xs sm:text-sm"
+                                    startContent={<FaWhatsapp size={16} />}
+                                  >
+                                    WhatsApp
+                                  </Button>
+                                  <Button
+                                    onClick={() =>
+                                      handleEmergencyContact("call", contact)
+                                    }
+                                    className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold py-2 text-xs sm:text-sm"
+                                    startContent={<FiPhone size={16} />}
+                                  >
+                                    Call
+                                  </Button>
+                                </div>
+                              </div>
+                            )
+                          )
+                        ) : (
+                          <p className="text-red-600 text-sm">
+                            No emergency contacts set up
+                          </p>
+                        )}
                       </div>
+
+                      <Button
+                        onClick={handleReportScam}
+                        className="w-full mt-4 bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
+                        variant="flat"
+                      >
+                        Report This Scam
+                      </Button>
                     </div>
                   )}
 

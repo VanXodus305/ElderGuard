@@ -56,14 +56,12 @@ export default function ProfileSetupPage() {
   };
 
   const [loading, setLoading] = useState(false);
-  const [sameAsPhone, setSameAsPhone] = useState(false);
   const [formData, setFormData] = useState({
     age: "",
     address: "",
-    emergencyContactName: "",
-    emergencyContactPhone: "",
-    emergencyContactWhatsapp: "",
+    emergencyContacts: [{ name: "", phone: "", whatsapp: "" }],
   });
+  const [sameAsPhoneIndexes, setSameAsPhoneIndexes] = useState(new Set());
 
   React.useEffect(() => {
     if (status === "unauthenticated") {
@@ -75,51 +73,83 @@ export default function ProfileSetupPage() {
     }
   }, [status, session, router]);
 
-  const handleChange = (e) => {
+  const handleChange = (e, contactIndex = null) => {
     let name, value;
 
-    // Handle HeroUI Select which has a different event structure
     if (e.target.name !== undefined) {
       name = e.target.name;
       value = e.target.value;
     } else if (typeof e === "object" && e.key !== undefined) {
-      // HeroUI Select uses a key-based system
       name = e.currentKey ? Object.keys(e)[0] : "age";
       value = Array.from(e)[0]?.[0] || e.toString();
     } else {
-      // Regular input
       name = e?.target?.name;
       value = e?.target?.value;
     }
 
     if (name) {
       setFormData((prev) => {
-        const updated = {
-          ...prev,
-          [name]: value,
-        };
-        // If phone number changes and sameAsPhone is checked, update WhatsApp field
-        if (name === "emergencyContactPhone" && sameAsPhone) {
-          updated.emergencyContactWhatsapp = value;
+        if (contactIndex !== null) {
+          // Handle emergency contact field changes
+          const updated = { ...prev };
+          updated.emergencyContacts[contactIndex][name] = value;
+          // If phone changes and sameAsPhone is checked, update WhatsApp
+          if (name === "phone" && sameAsPhoneIndexes.has(contactIndex)) {
+            updated.emergencyContacts[contactIndex].whatsapp = value;
+          }
+          return updated;
+        } else {
+          // Handle age/address changes
+          return { ...prev, [name]: value };
         }
-        return updated;
       });
     }
   };
 
-  const handleSameAsPhoneChange = (e) => {
-    const isChecked = e.target.checked;
-    setSameAsPhone(isChecked);
-    if (isChecked) {
+  const handleSameAsPhoneChange = (contactIndex) => {
+    setSameAsPhoneIndexes((prev) => {
+      const updated = new Set(prev);
+      if (updated.has(contactIndex)) {
+        updated.delete(contactIndex);
+        setFormData((prevData) => {
+          const updated = { ...prevData };
+          updated.emergencyContacts[contactIndex].whatsapp = "";
+          return updated;
+        });
+      } else {
+        updated.add(contactIndex);
+        setFormData((prevData) => {
+          const updated = { ...prevData };
+          updated.emergencyContacts[contactIndex].whatsapp =
+            updated.emergencyContacts[contactIndex].phone;
+          return updated;
+        });
+      }
+      return updated;
+    });
+  };
+
+  const addEmergencyContact = () => {
+    setFormData((prev) => ({
+      ...prev,
+      emergencyContacts: [
+        ...prev.emergencyContacts,
+        { name: "", phone: "", whatsapp: "" },
+      ],
+    }));
+  };
+
+  const removeEmergencyContact = (index) => {
+    if (formData.emergencyContacts.length > 1) {
       setFormData((prev) => ({
         ...prev,
-        emergencyContactWhatsapp: prev.emergencyContactPhone,
+        emergencyContacts: prev.emergencyContacts.filter((_, i) => i !== index),
       }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        emergencyContactWhatsapp: "",
-      }));
+      setSameAsPhoneIndexes((prev) => {
+        const updated = new Set(prev);
+        updated.delete(index);
+        return updated;
+      });
     }
   };
 
@@ -236,58 +266,93 @@ export default function ProfileSetupPage() {
 
               {/* Emergency Contact Section */}
               <div className="space-y-4 border-t-2 border-emerald-200 pt-6">
-                <h3 className="text-base sm:text-lg font-semibold text-emerald-900 mb-4">
-                  Emergency Contact Details
-                </h3>
-                <p className="text-emerald-700 text-xs sm:text-sm">
-                  This person will be notified in case of suspicious messages.
-                  Usually a family member or caregiver.
-                </p>
-
-                <Input
-                  label="Name"
-                  name="emergencyContactName"
-                  value={formData.emergencyContactName}
-                  onChange={handleChange}
-                  placeholder="Full name of emergency contact"
-                  type="text"
-                  isRequired
-                />
-
-                <Input
-                  label="Phone Number"
-                  name="emergencyContactPhone"
-                  value={formData.emergencyContactPhone}
-                  onChange={handleChange}
-                  placeholder="E.g., +91XXXXXXXXXX"
-                  type="tel"
-                  isRequired
-                  description="Contact number for emergency alerts"
-                />
-
-                <div className="space-y-3">
-                  <Checkbox
-                    checked={sameAsPhone}
-                    onChange={handleSameAsPhoneChange}
-                    className="text-emerald-600"
-                  >
-                    <span className="text-emerald-700">
-                      Same as phone number
-                    </span>
-                  </Checkbox>
-
-                  <Input
-                    label="WhatsApp Number"
-                    name="emergencyContactWhatsapp"
-                    value={formData.emergencyContactWhatsapp}
-                    onChange={handleChange}
-                    placeholder="E.g., +91XXXXXXXXXX"
-                    type="tel"
-                    disabled={sameAsPhone}
-                    isRequired={!sameAsPhone}
-                    description="WhatsApp number for notifications"
-                  />
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-base sm:text-lg font-semibold text-emerald-900 mb-1">
+                      Emergency Contacts
+                    </h3>
+                    <p className="text-emerald-700 text-xs sm:text-sm">
+                      Add multiple contacts to be notified of suspicious
+                      messages
+                    </p>
+                  </div>
                 </div>
+
+                {formData.emergencyContacts.map((contact, index) => (
+                  <div
+                    key={index}
+                    className="bg-emerald-50 p-4 rounded-lg border-2 border-emerald-200 space-y-3"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold text-emerald-900">
+                        Contact {index + 1}
+                      </span>
+                      {formData.emergencyContacts.length > 1 && (
+                        <Button
+                          isIconOnly
+                          className="bg-red-100 text-red-600 hover:bg-red-200"
+                          onClick={() => removeEmergencyContact(index)}
+                          size="sm"
+                        >
+                          ✕
+                        </Button>
+                      )}
+                    </div>
+
+                    <Input
+                      label="Name"
+                      name="name"
+                      value={contact.name}
+                      onChange={(e) => handleChange(e, index)}
+                      placeholder="Full name"
+                      type="text"
+                      isRequired
+                    />
+
+                    <Input
+                      label="Phone Number"
+                      name="phone"
+                      value={contact.phone}
+                      onChange={(e) => handleChange(e, index)}
+                      placeholder="E.g., +91XXXXXXXXXX"
+                      type="tel"
+                      isRequired
+                      description="Contact number for alerts"
+                    />
+
+                    <div className="space-y-3">
+                      <Checkbox
+                        checked={sameAsPhoneIndexes.has(index)}
+                        onChange={() => handleSameAsPhoneChange(index)}
+                        className="text-emerald-600"
+                      >
+                        <span className="text-emerald-700">
+                          Same as phone number
+                        </span>
+                      </Checkbox>
+
+                      <Input
+                        label="WhatsApp Number"
+                        name="whatsapp"
+                        value={contact.whatsapp}
+                        onChange={(e) => handleChange(e, index)}
+                        placeholder="E.g., +91XXXXXXXXXX"
+                        type="tel"
+                        disabled={sameAsPhoneIndexes.has(index)}
+                        isRequired={!sameAsPhoneIndexes.has(index)}
+                        description="WhatsApp number for notifications"
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                <Button
+                  onClick={addEmergencyContact}
+                  className="w-full bg-emerald-500 text-white font-semibold py-2"
+                  variant="flat"
+                >
+                  + Add Another Contact
+                </Button>
               </div>
 
               {/* Safety Notice */}

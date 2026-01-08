@@ -82,6 +82,15 @@ export async function POST(req) {
       });
     }
 
+    // Check if URL uses unencrypted HTTP (without HTTPS)
+    // This is a security risk - add warning but still scan
+    const isUnencryptedHttp = url.toLowerCase().startsWith("http://");
+    let httpWarning = null;
+    if (isUnencryptedHttp) {
+      httpWarning =
+        "⚠️ Warning: This site uses unencrypted HTTP instead of HTTPS. Your connection is not secure. Be extra careful!";
+    }
+
     if (!VIRUSTOTAL_API_KEY) {
       return new Response(
         JSON.stringify({ error: "VirusTotal API key not configured" }),
@@ -159,6 +168,7 @@ export async function POST(req) {
           (safetyResult.isSafe ? "safe" : "likely-scam"),
         confidence: safetyResult.confidence,
         analysisStatus: analysisData.attributes.status,
+        httpWarning: httpWarning,
       }),
       { status: 200 }
     );
