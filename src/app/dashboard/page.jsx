@@ -154,23 +154,50 @@ export default function DashboardPage() {
         // Continue with original message if translation fails
       }
 
+      // Extract URLs before Step 1 for metadata
       const urls = extractUrls(message);
+
+      // Calculate metadata features from message
+      const messageUpperCase = messageToAnalyze.toUpperCase();
+      const otpKeywords = /OTP|PIN|PASSWORD|VERIFY|CONFIRM/i;
+      const urgencyKeywords = /URGENT|IMMEDIATELY|NOW|ASAP|QUICKLY|HURRY|RUSH/i;
+      const threatKeywords =
+        /FREEZE|BLOCK|CANCEL|SUSPEND|DELETE|ACCOUNT|CLOSE/i;
+      const upiKeywords = /UPI|GPAY|PAYTM|PHONEPE|RUPAY/i;
+
+      const metadata = {
+        has_otp: otpKeywords.test(messageToAnalyze) ? 1 : 0,
+        has_urgency: urgencyKeywords.test(messageToAnalyze) ? 1 : 0,
+        has_threat: threatKeywords.test(messageToAnalyze) ? 1 : 0,
+        has_upi: upiKeywords.test(messageToAnalyze) ? 1 : 0,
+        has_url: urls.length > 0 ? 1 : 0,
+        severity: 0,
+      };
+
+      // Calculate severity (0-1 scale)
+      let severityScore = 0;
+      if (metadata.has_otp) severityScore += 0.2;
+      if (metadata.has_urgency) severityScore += 0.2;
+      if (metadata.has_threat) severityScore += 0.2;
+      if (metadata.has_upi) severityScore += 0.2;
+      if (metadata.has_url) severityScore += 0.2;
+      metadata.severity = Math.min(severityScore, 1);
+
+      // console.log("Message Metadata:", metadata);
 
       // Step 1: Call ML API to analyze message content
       let mlResult = { prediction: "safe", confidence: 0 };
       try {
-        const mlResponse = await fetch(
-          "https://elderguard-ml-api.onrender.com/predict",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              message: messageToAnalyze,
-            }),
-          }
-        );
+        const mlResponse = await fetch("/api/analyze-message", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: messageToAnalyze,
+            metadata: metadata,
+          }),
+        });
 
         if (mlResponse.ok) {
           mlResult = await mlResponse.json();
