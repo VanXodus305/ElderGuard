@@ -101,27 +101,27 @@ const GlobalNavbar = () => {
   const tutorials = [
     {
       id: 1,
-      title: "Recognizing Phishing Scams",
+      title: "ElderGuard: Fake Call Scams",
       description:
-        "Learn how to identify and avoid phishing scams that target elderly people",
-      videoId: "dQw4w9WgXcQ",
-      thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+        "Learn how to identify and avoid fake call scams targeting seniors",
+      videoId: "uAo94Qw5mQk",
+      thumbnail: "https://img.youtube.com/vi/uAo94Qw5mQk/hqdefault.jpg",
     },
     {
       id: 2,
-      title: "Protecting Your Online Banking",
+      title: "ElderGuard: Cyber Safety Tips for Senior Citizens",
       description:
-        "Best practices to keep your bank account and personal information safe",
-      videoId: "3JZ_D3UKsQw",
-      thumbnail: "https://img.youtube.com/vi/3JZ_D3UKsQw/mqdefault.jpg",
+        "Essential tips to stay safe online and protect yourself from scams",
+      videoId: "R14UTB3Bixg",
+      thumbnail: "https://img.youtube.com/vi/R14UTB3Bixg/hqdefault.jpg",
     },
     {
       id: 3,
-      title: "Social Media Safety Tips",
+      title: "ElderGuard: Fake SMS & Link Scams",
       description:
-        "How to use social media safely and avoid sharing sensitive information",
-      videoId: "jNQXAC9IVRw",
-      thumbnail: "https://img.youtube.com/vi/jNQXAC9IVRw/mqdefault.jpg",
+        "Recognize fraudulent messages and links to safeguard your personal information",
+      videoId: "pXlUZ-NN7TA",
+      thumbnail: "https://img.youtube.com/vi/pXlUZ-NN7TA/mqdefault.jpg",
     },
     {
       id: 4,
@@ -218,9 +218,7 @@ const GlobalNavbar = () => {
         onClick={() => router.push("/")}
       >
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-            🛡️
-          </div>
+          <img src="/images/Logo.png" alt="ElderGuard Logo" className="h-12" />
           <p className="font-bold text-xl text-emerald-700">ElderGuard</p>
         </div>
       </NavbarBrand>

@@ -66,9 +66,11 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-5xl">
-                🛡️
-              </div>
+              <img
+                src="/images/Logo.png"
+                alt="ElderGuard Logo"
+                className="h-20 md:h-32"
+              />
             </div>
             <h1
               className={`${getHeadingClass(4)} md:${getHeadingClass(
