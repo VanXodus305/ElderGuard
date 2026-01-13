@@ -68,6 +68,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [loadingStartTime, setLoadingStartTime] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   React.useEffect(() => {
     if (status === "unauthenticated") {
@@ -80,6 +82,19 @@ export default function DashboardPage() {
       }
     }
   }, [status, session, router]);
+
+  // Update elapsed time while loading
+  React.useEffect(() => {
+    let interval;
+    if (loading && loadingStartTime) {
+      interval = setInterval(() => {
+        const now = Date.now();
+        const elapsed = Math.floor((now - loadingStartTime) / 1000);
+        setElapsedTime(elapsed);
+      }, 100);
+    }
+    return () => clearInterval(interval);
+  }, [loading, loadingStartTime]);
 
   const fetchProfile = async () => {
     try {
@@ -124,6 +139,8 @@ export default function DashboardPage() {
     }
 
     setLoading(true);
+    setLoadingStartTime(Date.now());
+    setElapsedTime(0);
 
     try {
       // Step 0: Translate message to English if needed
@@ -468,12 +485,28 @@ export default function DashboardPage() {
           {/* Results Section - Right column */}
           <div>
             {loading ? (
-              // Loading skeleton
+              // Loading animation with skeleton
               <Card className="border-2 border-gray-200 bg-white shadow-lg h-full">
-                <CardHeader className="bg-gray-200 p-4 sm:p-6">
-                  <Skeleton className="w-1/2 h-8 rounded-lg" />
-                </CardHeader>
                 <CardBody className="p-4 sm:p-8 space-y-4 sm:space-y-6">
+                  {/* Centered Loading Animation */}
+                  <div className="flex flex-col items-center justify-center gap-3 py-6">
+                    <div>
+                      <img
+                        src="/images/Loading.gif"
+                        alt="Loading..."
+                        className="w-16 h-16 sm:w-20 sm:h-20"
+                      />
+                    </div>
+                    <p className="text-emerald-600 font-semibold text-sm sm:text-base">
+                      Analyzing message...
+                    </p>
+                    <p className="text-emerald-500 text-xs sm:text-sm">
+                      Time taken: {elapsedTime}s
+                    </p>
+                  </div>
+
+                  {/* Skeleton placeholders */}
+                  <Skeleton className="w-1/2 h-8 rounded-lg" />
                   <Skeleton className="w-full h-6 rounded-lg" />
                   <Skeleton className="w-full h-20 rounded-lg" />
                   <Skeleton className="w-full h-6 rounded-lg" />
