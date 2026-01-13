@@ -132,6 +132,27 @@ export default function DashboardPage() {
     return Array.from(urls);
   };
 
+  // Check if URL is a short link (bit.ly, tinyurl, etc.)
+  const isShortLink = (url) => {
+    const shortLinkPatterns = [
+      /bit\.ly/i,
+      /tinyurl\.com/i,
+      /short\.link/i,
+      /ow\.ly/i,
+      /goo\.gl/i,
+      /t\.co/i,
+      /reurl\.cc/i,
+      /buff\.ly/i,
+      /adf\.ly/i,
+      /surl\.li/i,
+      /tiny\.cc/i,
+      /url\.shortener/i,
+      /is\.gd/i,
+      /shortened\./i,
+    ];
+    return shortLinkPatterns.some((pattern) => pattern.test(url));
+  };
+
   const handleAnalyzeMessage = async () => {
     if (!message.trim()) {
       alert("Please enter a message to analyze");
@@ -148,31 +169,38 @@ export default function DashboardPage() {
       let detectedLanguage = "en";
       let wasTranslated = false;
 
-      try {
-        const translationResponse = await fetch("/api/translate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ text: message.trim() }),
-        });
-
-        if (translationResponse.ok) {
-          const translationData = await translationResponse.json();
-          messageToAnalyze = translationData.translatedText;
-          detectedLanguage = translationData.detectedLanguage;
-          wasTranslated = translationData.wasTranslated;
-          // console.log(
-          //   `Detected language: ${detectedLanguage}, Translated: ${wasTranslated}`
-          // );
-        }
-      } catch (error) {
-        console.error("Translation error (continuing with original):", error);
-        // Continue with original message if translation fails
-      }
-
-      // Extract URLs before Step 1 for metadata
+      // Extract URLs before translation to check if message is URL-only
       const urls = extractUrls(message);
+      const messageWithoutUrls = message
+        .trim()
+        .replace(/(https?:\/\/[^\s]+)/g, "")
+        .trim();
+
+      // Only translate if there's actual text content (not just URLs)
+      if (messageWithoutUrls.length > 0) {
+        try {
+          const translationResponse = await fetch("/api/translate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ text: message.trim() }),
+          });
+
+          if (translationResponse.ok) {
+            const translationData = await translationResponse.json();
+            messageToAnalyze = translationData.translatedText;
+            detectedLanguage = translationData.detectedLanguage;
+            wasTranslated = translationData.wasTranslated;
+            // console.log(
+            //   `Detected language: ${detectedLanguage}, Translated: ${wasTranslated}`
+            // );
+          }
+        } catch (error) {
+          console.error("Translation error (continuing with original):", error);
+          // Continue with original message if translation fails
+        }
+      }
 
       // Calculate metadata features from message
       const messageUpperCase = messageToAnalyze.toUpperCase();
@@ -233,18 +261,50 @@ export default function DashboardPage() {
         linkScores = await Promise.all(
           urls.map(async (url) => {
             try {
+              let originalUrl = url;
+              let expandedUrl = url;
+              let wasExpanded = false;
+
+              // Step 2a: Expand short links first
+              if (isShortLink(url)) {
+                try {
+                  const expandResponse = await fetch("/api/expand-url", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ url }),
+                  });
+
+                  if (expandResponse.ok) {
+                    const expandData = await expandResponse.json();
+                    expandedUrl = expandData.expandedUrl;
+                    wasExpanded = expandData.wasExpanded;
+                  }
+                } catch (expandError) {
+                  console.error(
+                    `Error expanding short link ${url}:`,
+                    expandError
+                  );
+                  // Continue with original URL if expansion fails
+                }
+              }
+
+              // Step 2b: Scan the URL (expanded or original) with VirusTotal
               const response = await fetch("/api/scan-url", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ url }),
+                body: JSON.stringify({ url: expandedUrl }),
               });
 
               if (response.ok) {
                 const data = await response.json();
                 return {
-                  url,
+                  originalUrl,
+                  url: expandedUrl,
+                  wasExpanded,
                   isSafe: data.isSafe,
                   riskLevel: data.riskLevel,
                   stats: data.stats,
@@ -254,7 +314,9 @@ export default function DashboardPage() {
               } else {
                 // Fallback if API fails
                 return {
-                  url,
+                  originalUrl,
+                  url: expandedUrl,
+                  wasExpanded,
                   isSafe: true,
                   riskLevel: "unknown",
                   error: "Could not scan URL",
@@ -263,7 +325,9 @@ export default function DashboardPage() {
             } catch (error) {
               console.error(`Error scanning URL ${url}:`, error);
               return {
-                url,
+                originalUrl: url,
+                url: url,
+                wasExpanded: false,
                 isSafe: true,
                 riskLevel: "unknown",
                 error: "Scan failed",
@@ -610,9 +674,22 @@ export default function DashboardPage() {
                                 ) : (
                                   <FiAlertOctagon className="w-4 sm:w-5 h-4 sm:h-5 text-red-600 flex-shrink-0" />
                                 )}
-                                <p className="text-xs sm:text-sm text-gray-700 break-all">
-                                  {link.url}
-                                </p>
+                                <div className="flex-1 min-w-0">
+                                  {link.wasExpanded ? (
+                                    <div>
+                                      <p className="text-xs sm:text-sm text-gray-700 break-all font-semibold">
+                                        {link.originalUrl}
+                                      </p>
+                                      <p className="text-xs text-gray-600 break-all">
+                                        → {link.url}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs sm:text-sm text-gray-700 break-all">
+                                      {link.url}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                               <Chip
                                 size="sm"
