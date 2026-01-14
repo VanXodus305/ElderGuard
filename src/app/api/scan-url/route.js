@@ -38,17 +38,22 @@ function determineSafetyLevel(stats) {
   }
 
   // SCAM CLASSIFICATION (High confidence it's malicious)
-  // Case 1: High absolute number of malicious detections
+  // Case 1: At least 2 malicious detections
+  if (malicious >= 2) {
+    return { isSafe: false, confidence: "high", riskLevel: "likely-scam" };
+  }
+
+  // Case 2: High absolute number of malicious detections
   if (malicious > 10) {
     return { isSafe: false, confidence: "high", riskLevel: "scam" };
   }
 
-  // Case 2: High percentage of malicious detections (>20%)
+  // Case 3: High percentage of malicious detections (>20%)
   if (maliciousPercentage > 20) {
     return { isSafe: false, confidence: "high", riskLevel: "scam" };
   }
 
-  // Case 3: Malicious detections more than 20% of harmless votes
+  // Case 4: Malicious detections more than 20% of harmless votes
   if (harmless > 0 && malicious > harmless * 0.2) {
     return { isSafe: false, confidence: "high", riskLevel: "scam" };
   }
