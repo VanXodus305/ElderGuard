@@ -9,6 +9,7 @@
 ---
 
 ### 🎯 **Core Problem**
+
 Elderly users are 3x more likely to fall victim to online scams. ElderGuard provides AI-powered, accessible scam detection.
 
 ---
@@ -16,17 +17,20 @@ Elderly users are 3x more likely to fall victim to online scams. ElderGuard prov
 ### ✨ **Key Features** (Implemented)
 
 **1. Secure Authentication**
+
 - Google OAuth login via NextAuth.js v5
 - Profile completion gating (emergency contacts required)
 - Secure session management (httpOnly cookies, CSRF protection)
 
 **2. Multi-Layer Threat Detection**
+
 - ML API analysis (text-based scam prediction with metadata)
 - VirusTotal scanning (98+ security engines)
 - Short link expansion (bit.ly → actual-phishing-site.com)
 - HTTP/HTTPS security warnings
 
 **3. Smart URL Processing**
+
 ```
 User Input: "Check this: https://bit.ly/kyc-2025"
                         ↓
@@ -38,12 +42,14 @@ Result: "bit.ly/kyc → actual-site.com [UNSAFE - 5 malicious]"
 ```
 
 **4. Emergency Contact System**
+
 - Multiple emergency contacts (add/edit/remove)
 - WhatsApp alert with detailed scam report
 - One-tap call button
 - Individual per-contact actions (not grouped)
 
 **5. Language & Accessibility**
+
 - 180+ language support (Franc library)
 - Transliteration detection (Hinglish, Tanglish, etc.)
 - 4 font size options (small/base/large/xl)
@@ -130,11 +136,11 @@ USER MESSAGE INPUT
 
 ### 🛡️ **Scam Detection Rules** (VirusTotal Scoring)
 
-| Classification | Condition |
-|---|---|
-| 🟢 **SAFE** | 0 malicious OR (1-2 malicious + 50+ harmless) OR <3% malicious ratio |
-| 🟡 **LIKELY SCAM** | 3-10 malicious OR 3-20% malicious ratio |
-| 🔴 **SCAM** | **≥2 malicious flags ⚠️** OR >10 malicious OR >20% malicious ratio |
+| Classification     | Condition                                                            |
+| ------------------ | -------------------------------------------------------------------- |
+| 🟢 **SAFE**        | 0 malicious OR (1-2 malicious + 50+ harmless) OR <3% malicious ratio |
+| 🟡 **LIKELY SCAM** | 3-10 malicious OR 3-20% malicious ratio                              |
+| 🔴 **SCAM**        | **≥2 malicious flags ⚠️** OR >10 malicious OR >20% malicious ratio   |
 
 ---
 
@@ -143,7 +149,8 @@ USER MESSAGE INPUT
 **Frontend:** Next.js 13+, React, HeroUI, Tailwind CSS, React Icons
 **Backend:** Next.js API Routes, Node.js, Axios
 **Auth & DB:** NextAuth.js v5 (Google OAuth), MongoDB + Mongoose
-**External APIs:** 
+**External APIs:**
+
 - VirusTotal (threat analysis)
 - scam-detection-iitkgp.onrender.com (ML model)
 - Google Translate API (language translation)
@@ -214,4 +221,3 @@ USER MESSAGE INPUT
 - Error handling with graceful degradation
 
 ---
-
