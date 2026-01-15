@@ -17,7 +17,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           async
@@ -38,9 +38,14 @@ export default function RootLayout({ children }) {
       </head>
       <body
         className={`${geistSans.className} bg-gradient-to-b from-background-200 to-background-100 min-h-screen light flex flex-col`}
+        suppressHydrationWarning
       >
         {/* Hidden Google Translate Element */}
-        <div id="google_translate_element" style={{ display: "none" }}></div>
+        <div
+          id="google_translate_element"
+          style={{ display: "none" }}
+          suppressHydrationWarning
+        ></div>
 
         <Provider>
           <FontSizeProvider>

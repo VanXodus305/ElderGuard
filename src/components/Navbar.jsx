@@ -20,6 +20,8 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
+  Tabs,
+  Tab,
   useDisclosure,
 } from "@heroui/react";
 import { useSession, signOut } from "next-auth/react";
@@ -32,7 +34,6 @@ export const FontSizeContext = createContext();
 
 export const FontSizeProvider = ({ children }) => {
   const [fontSize, setFontSizeState] = useState("large");
-  const [isLoaded, setIsLoaded] = useState(false);
 
   // Load saved font size from localStorage on mount
   useEffect(() => {
@@ -47,7 +48,6 @@ export const FontSizeProvider = ({ children }) => {
     } catch (error) {
       console.error("Error loading font size preference:", error);
     }
-    setIsLoaded(true);
   }, []);
 
   // Wrapper for setFontSize that also saves to localStorage
@@ -68,9 +68,7 @@ export const FontSizeProvider = ({ children }) => {
   };
 
   return (
-    <FontSizeContext.Provider
-      value={{ fontSize, setFontSize, fontSizeMap, isLoaded }}
-    >
+    <FontSizeContext.Provider value={{ fontSize, setFontSize, fontSizeMap }}>
       {children}
     </FontSizeContext.Provider>
   );
@@ -90,13 +88,13 @@ const GlobalNavbar = () => {
   const { fontSize, setFontSize, fontSizeMap } = useFontSize();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("en");
-  const [isLoaded, setIsLoaded] = useState(false);
   const {
     isOpen: isTutorialsOpen,
     onOpen: onTutorialsOpen,
     onOpenChange: onTutorialsOpenChange,
   } = useDisclosure();
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [tutorialLanguage, setTutorialLanguage] = useState("english");
 
   const tutorials = [
     {
@@ -104,15 +102,17 @@ const GlobalNavbar = () => {
       title: "ElderGuard: Fake Call Scams",
       description:
         "Learn how to identify and avoid fake call scams targeting seniors",
-      videoId: "uAo94Qw5mQk",
+      hindi: "uAo94Qw5mQk",
+      english: "_9evszpetp4",
       thumbnail: "https://img.youtube.com/vi/uAo94Qw5mQk/hqdefault.jpg",
     },
     {
       id: 2,
-      title: "ElderGuard: Cyber Safety Tips for Senior Citizens",
+      title: "ElderGuard: Banking Safety Tips for Seniors",
       description:
-        "Essential tips to stay safe online and protect yourself from scams",
-      videoId: "R14UTB3Bixg",
+        "Essential tips to keep your banking information secure from scams",
+      hindi: "R14UTB3Bixg",
+      english: "QYz-4YjKwPk",
       thumbnail: "https://img.youtube.com/vi/R14UTB3Bixg/hqdefault.jpg",
     },
     {
@@ -120,16 +120,18 @@ const GlobalNavbar = () => {
       title: "ElderGuard: Fake SMS & Link Scams",
       description:
         "Recognize fraudulent messages and links to safeguard your personal information",
-      videoId: "pXlUZ-NN7TA",
-      thumbnail: "https://img.youtube.com/vi/pXlUZ-NN7TA/mqdefault.jpg",
+      hindi: "pXlUZ-NN7TA",
+      english: "8GyJMwVt74o",
+      thumbnail: "https://img.youtube.com/vi/pXlUZ-NN7TA/hqdefault.jpg",
     },
     {
       id: 4,
-      title: "Spotting Tech Support Scams",
+      title: "ElderGuard: Login Scams Targeting Seniors",
       description:
-        "Understand how scammers impersonate tech support and how to protect yourself",
-      videoId: "8eKcZJu_y5I",
-      thumbnail: "https://img.youtube.com/vi/8eKcZJu_y5I/mqdefault.jpg",
+        "How to spot and avoid login scams that target elderly individuals",
+      hindi: "rwzf35ue90I",
+      english: "4O9-RVh1Mgk",
+      thumbnail: "https://img.youtube.com/vi/rwzf35ue90I/hqdefault.jpg",
     },
   ];
 
@@ -153,7 +155,6 @@ const GlobalNavbar = () => {
     } catch (error) {
       console.error("Error loading language preference:", error);
     }
-    setIsLoaded(true);
   }, []);
 
   const handleTranslate = (language) => {
@@ -636,46 +637,134 @@ const GlobalNavbar = () => {
                 </Button>
               </div>
             ) : (
-              // Tutorials Grid View
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {tutorials.map((tutorial) => (
-                  <div
-                    key={tutorial.id}
-                    onClick={() => setSelectedVideo(tutorial)}
-                    className="cursor-pointer group"
-                  >
-                    <div className="relative overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
-                      <div className="relative overflow-hidden h-40 bg-gray-200">
-                        <img
-                          src={tutorial.thumbnail}
-                          alt={tutorial.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
-                          <IoPlay className="text-white text-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        </div>
-                      </div>
-                      <div className="p-4 flex-1 flex flex-col justify-between">
-                        <div>
-                          <h3 className="font-bold text-emerald-700 text-sm line-clamp-2 mb-2">
-                            {tutorial.title}
-                          </h3>
-                          <p className="text-xs text-gray-600 line-clamp-3">
-                            {tutorial.description}
-                          </p>
-                        </div>
-                        <Button
-                          isIconOnly
-                          className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white mt-3 self-start"
-                          size="sm"
-                          onClick={() => setSelectedVideo(tutorial)}
+              // Tutorials Grid View with Language Tabs
+              <div className="flex flex-col gap-4 justify-center items-center">
+                <Tabs
+                  selectedKey={tutorialLanguage}
+                  onSelectionChange={setTutorialLanguage}
+                  classNames={{
+                    tabList: "bg-emerald-100 rounded-lg p-1",
+                    tab: "text-emerald-700 font-semibold",
+                    cursor: "bg-gradient-to-r from-emerald-500 to-teal-600",
+                  }}
+                >
+                  <Tab key="english" title="English Videos" className="w-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                      {tutorials.map((tutorial) => (
+                        <div
+                          key={tutorial.id}
+                          onClick={() =>
+                            setSelectedVideo({
+                              ...tutorial,
+                              videoId: tutorial.english,
+                              title: tutorial.title,
+                              description: tutorial.description,
+                            })
+                          }
+                          className="cursor-pointer group"
                         >
-                          <IoPlay size={16} />
-                        </Button>
-                      </div>
+                          <div className="relative overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
+                            <div className="relative overflow-hidden h-40 bg-gray-200">
+                              <img
+                                src={tutorial.thumbnail}
+                                alt={tutorial.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
+                                <IoPlay className="text-white text-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                              </div>
+                            </div>
+                            <div className="p-4 flex-1 flex flex-col justify-between">
+                              <div>
+                                <h3 className="font-bold text-emerald-700 text-sm line-clamp-2 mb-2">
+                                  {tutorial.title}
+                                </h3>
+                                <p className="text-xs text-gray-600 line-clamp-3">
+                                  {tutorial.description}
+                                </p>
+                              </div>
+                              <Button
+                                isIconOnly
+                                className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white mt-3 self-start"
+                                size="sm"
+                                onClick={() =>
+                                  setSelectedVideo({
+                                    ...tutorial,
+                                    videoId: tutorial.english,
+                                    title: tutorial.title,
+                                    description: tutorial.description,
+                                  })
+                                }
+                              >
+                                <IoPlay size={16} />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))}
+                  </Tab>
+                  <Tab
+                    key="hindi"
+                    title="हिंदी (Hindi) Videos"
+                    className="w-full"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                      {tutorials.map((tutorial) => (
+                        <div
+                          key={tutorial.id}
+                          onClick={() =>
+                            setSelectedVideo({
+                              ...tutorial,
+                              videoId: tutorial.hindi,
+                              title: tutorial.title,
+                              description: tutorial.description,
+                            })
+                          }
+                          className="cursor-pointer group"
+                        >
+                          <div className="relative overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
+                            <div className="relative overflow-hidden h-40 bg-gray-200">
+                              <img
+                                src={tutorial.thumbnail}
+                                alt={tutorial.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
+                                <IoPlay className="text-white text-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                              </div>
+                            </div>
+                            <div className="p-4 flex-1 flex flex-col justify-between">
+                              <div>
+                                <h3 className="font-bold text-emerald-700 text-sm line-clamp-2 mb-2">
+                                  {tutorial.title}
+                                </h3>
+                                <p className="text-xs text-gray-600 line-clamp-3">
+                                  {tutorial.description}
+                                </p>
+                              </div>
+                              <Button
+                                isIconOnly
+                                className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white mt-3 self-start"
+                                size="sm"
+                                onClick={() =>
+                                  setSelectedVideo({
+                                    ...tutorial,
+                                    videoId: tutorial.hindi,
+                                    title: tutorial.title,
+                                    description: tutorial.description,
+                                  })
+                                }
+                              >
+                                <IoPlay size={16} />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Tab>
+                </Tabs>
               </div>
             )}
           </ModalBody>
