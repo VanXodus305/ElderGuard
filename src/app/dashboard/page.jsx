@@ -284,7 +284,7 @@ export default function DashboardPage() {
                 } catch (expandError) {
                   console.error(
                     `Error expanding short link ${url}:`,
-                    expandError
+                    expandError,
                   );
                   // Continue with original URL if expansion fails
                 }
@@ -333,7 +333,7 @@ export default function DashboardPage() {
                 error: "Scan failed",
               };
             }
-          })
+          }),
         );
       }
 
@@ -346,10 +346,10 @@ export default function DashboardPage() {
       } else {
         // ML says safe, so check links
         const hasScamLink = linkScores.some(
-          (link) => link.riskLevel === "scam"
+          (link) => link.riskLevel === "scam",
         );
         const hasLikelyScamLink = linkScores.some(
-          (link) => link.riskLevel === "likely-scam"
+          (link) => link.riskLevel === "likely-scam",
         );
         const hasUnsafeLink = linkScores.some((link) => !link.isSafe);
 
@@ -387,11 +387,11 @@ export default function DashboardPage() {
   const handleReportScam = () => {
     // Dummy report button - to be implemented later
     alert(
-      "Thank you for reporting this message. Our team will review it shortly."
+      "Thank you for reporting. Our team will review this analysis shortly.",
     );
     // TODO: Implement actual reporting functionality
     // - Send report to backend with message details, analysis results, etc.
-    // - Track reported scams for ML model improvement
+    // - Track reported errors for ML model improvement
     // - Notify moderators
   };
 
@@ -424,7 +424,7 @@ export default function DashboardPage() {
       const phone = contact.whatsapp || contact.phone;
       const whatsappUrl = `https://wa.me/${phone.replace(
         /[^0-9+]/g,
-        ""
+        "",
       )}?text=${encodeURIComponent(reportMessage)}`;
       window.open(whatsappUrl, "_blank");
     } else if (method === "call") {
@@ -499,7 +499,7 @@ export default function DashboardPage() {
         <div className="mb-6 sm:mb-8">
           <h1
             className={`${getHeadingClass(
-              3
+              3,
             )} font-bold text-emerald-900 mb-2 sm:mb-3`}
           >
             Welcome, {session?.user?.name || "User"}! 👋
@@ -584,8 +584,8 @@ export default function DashboardPage() {
                   analysisResult.riskLevel === "safe"
                     ? "border-green-300 bg-green-50"
                     : analysisResult.riskLevel === "likely-scam"
-                    ? "border-yellow-300 bg-yellow-50"
-                    : "border-red-300 bg-red-50"
+                      ? "border-yellow-300 bg-yellow-50"
+                      : "border-red-300 bg-red-50"
                 }`}
               >
                 <CardHeader
@@ -593,8 +593,8 @@ export default function DashboardPage() {
                     analysisResult.riskLevel === "safe"
                       ? "bg-green-500"
                       : analysisResult.riskLevel === "likely-scam"
-                      ? "bg-yellow-500"
-                      : "bg-red-500"
+                        ? "bg-yellow-500"
+                        : "bg-red-500"
                   }`}
                 >
                   <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -613,8 +613,8 @@ export default function DashboardPage() {
                         analysisResult.riskLevel === "safe"
                           ? "text-green-900"
                           : analysisResult.riskLevel === "likely-scam"
-                          ? "text-yellow-900"
-                          : "text-red-900"
+                            ? "text-yellow-900"
+                            : "text-red-900"
                       }`}
                     >
                       {getRiskLevelText().description}
@@ -646,7 +646,7 @@ export default function DashboardPage() {
                     <div>
                       <h3
                         className={`${getHeadingClass(
-                          2
+                          2,
                         )} font-semibold mb-3 sm:mb-4 flex items-center gap-2`}
                       >
                         <FiLink2 /> Links Found ({analysisResult.urls.length})
@@ -711,7 +711,7 @@ export default function DashboardPage() {
                     <div className="bg-red-50 border-l-4 border-red-500 p-3 sm:p-4 rounded">
                       <h3
                         className={`${getHeadingClass(
-                          2
+                          2,
                         )} font-semibold text-red-900 mb-3 sm:mb-4`}
                       >
                         Alert All Emergency Contacts (
@@ -734,7 +734,7 @@ export default function DashboardPage() {
                                     onClick={() =>
                                       handleEmergencyContact(
                                         "whatsapp",
-                                        contact
+                                        contact,
                                       )
                                     }
                                     className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-2 text-xs sm:text-sm"
@@ -753,7 +753,7 @@ export default function DashboardPage() {
                                   </Button>
                                 </div>
                               </div>
-                            )
+                            ),
                           )
                         ) : (
                           <p className="text-red-600 text-sm">
@@ -767,7 +767,7 @@ export default function DashboardPage() {
                         className="w-full mt-4 bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
                         variant="flat"
                       >
-                        Report This Scam
+                        Report Errors
                       </Button>
                     </div>
                   )}
@@ -779,6 +779,13 @@ export default function DashboardPage() {
                         ✓ This message appears safe. You can safely interact
                         with it.
                       </p>
+                      <Button
+                        onClick={handleReportScam}
+                        className="w-full mt-4 bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base"
+                        variant="flat"
+                      >
+                        Report Errors
+                      </Button>
                     </div>
                   )}
                 </CardBody>
