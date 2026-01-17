@@ -99,7 +99,9 @@ const GlobalNavbar = () => {
   const tutorials = [
     {
       id: 1,
-      title: "ElderGuard: Fake Call Scams",
+      "title-en":
+        "ElderGuard: Protect Yourself from Voice Call Scams | Phishing Prevention Tips",
+      "title-hi": "ElderGuard: Fake Call Scams | Voice Fraud Se Kaise Bachen? ",
       description:
         "Learn how to identify and avoid fake call scams targeting seniors",
       hindi: "uAo94Qw5mQk",
@@ -108,7 +110,10 @@ const GlobalNavbar = () => {
     },
     {
       id: 2,
-      title: "ElderGuard: Banking Safety Tips for Seniors",
+      "title-en":
+        "ElderGuard: Banking Safety Tips for Seniors | Avoid ATM & UPI Scams",
+      "title-hi":
+        "ElderGuard: Cyber Safety Tips for Senior Citizens | UPI & ATM Fraud se Kaise Bachen?",
       description:
         "Essential tips to keep your banking information secure from scams",
       hindi: "R14UTB3Bixg",
@@ -117,7 +122,10 @@ const GlobalNavbar = () => {
     },
     {
       id: 3,
-      title: "ElderGuard: Fake SMS & Link Scams",
+      "title-en":
+        "ElderGuard: How to Spot Fake Text Message Scams | Senior Safety Tips",
+      "title-hi":
+        "ElderGuard: Fake SMS & Link Scams | Message Fraud Se Kaise Bachen?",
       description:
         "Recognize fraudulent messages and links to safeguard your personal information",
       hindi: "pXlUZ-NN7TA",
@@ -126,7 +134,10 @@ const GlobalNavbar = () => {
     },
     {
       id: 4,
-      title: "ElderGuard: Login Scams Targeting Seniors",
+      "title-en":
+        "How to Use ElderGuard: Complete Setup & Scam Detection Guide",
+      "title-hi":
+        "ElderGuard App Kaise Use Kare? | Real vs Fake Message Check Karein",
       description:
         "How to spot and avoid login scams that target elderly individuals",
       hindi: "rwzf35ue90I",
@@ -657,7 +668,7 @@ const GlobalNavbar = () => {
                             setSelectedVideo({
                               ...tutorial,
                               videoId: tutorial.english,
-                              title: tutorial.title,
+                              title: tutorial["title-en"],
                               description: tutorial.description,
                             })
                           }
@@ -667,7 +678,7 @@ const GlobalNavbar = () => {
                             <div className="relative overflow-hidden h-40 bg-gray-200">
                               <img
                                 src={tutorial.thumbnail}
-                                alt={tutorial.title}
+                                alt={tutorial["title-en"]}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
                               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
@@ -677,7 +688,7 @@ const GlobalNavbar = () => {
                             <div className="p-4 flex-1 flex flex-col justify-between">
                               <div>
                                 <h3 className="font-bold text-emerald-700 text-sm line-clamp-2 mb-2">
-                                  {tutorial.title}
+                                  {tutorial["title-en"]}
                                 </h3>
                                 <p className="text-xs text-gray-600 line-clamp-3">
                                   {tutorial.description}
@@ -691,7 +702,7 @@ const GlobalNavbar = () => {
                                   setSelectedVideo({
                                     ...tutorial,
                                     videoId: tutorial.english,
-                                    title: tutorial.title,
+                                    title: tutorial["title-en"],
                                     description: tutorial.description,
                                   })
                                 }
@@ -717,7 +728,7 @@ const GlobalNavbar = () => {
                             setSelectedVideo({
                               ...tutorial,
                               videoId: tutorial.hindi,
-                              title: tutorial.title,
+                              title: tutorial["title-hi"],
                               description: tutorial.description,
                             })
                           }
@@ -727,7 +738,7 @@ const GlobalNavbar = () => {
                             <div className="relative overflow-hidden h-40 bg-gray-200">
                               <img
                                 src={tutorial.thumbnail}
-                                alt={tutorial.title}
+                                alt={tutorial["title-hi"]}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
                               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
@@ -737,7 +748,7 @@ const GlobalNavbar = () => {
                             <div className="p-4 flex-1 flex flex-col justify-between">
                               <div>
                                 <h3 className="font-bold text-emerald-700 text-sm line-clamp-2 mb-2">
-                                  {tutorial.title}
+                                  {tutorial["title-hi"]}
                                 </h3>
                                 <p className="text-xs text-gray-600 line-clamp-3">
                                   {tutorial.description}
@@ -751,7 +762,7 @@ const GlobalNavbar = () => {
                                   setSelectedVideo({
                                     ...tutorial,
                                     videoId: tutorial.hindi,
-                                    title: tutorial.title,
+                                    title: tutorial["title-hi"],
                                     description: tutorial.description,
                                   })
                                 }
